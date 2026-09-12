@@ -3,8 +3,8 @@ p_spr_sets={
 	-- sets are 12 long, values are the starter numbers for the key's character
 	viking=1,
 	wizard=13,
-	knight=24,
-	cowboy=35
+	knight=25,
+	cowboy=37
 }
 
 function player_animate(char)

@@ -56,17 +56,36 @@ function _init()
 		shake_timer=0
   }
 
-	-- enemy:
-	-- x,
-	-- y,
-	-- h,
-	-- w,
-	-- type,
 	enemies = {}
 
+	--- TEST -----
 	--spawn_enemy(24,32,"knight")
 	--spawn_enemy(88, 24, "wizard")
 	spawn_enemy(24,64,"cowboy")
+
+	-- charater type timer
+	phase = {
+		duration=400,     -- 600 frame = 20mp at 30fps
+		current=400,
+		char_index=1,    
+		dot_count=8, 
+	
+		-- melyik karakter melyik enemyt uti (rock-paper-scissors)
+		beats = {
+			[1]="viking",
+			[2]="wizard",
+			[3]="knight",
+			[4]="cowboy"
+		},
+	
+		-- depletion queue for timer rectangles
+		-- center always stays
+		cell_order = {
+			{-1,-1},{0,-1},{1,-1},
+			{1,0},{1,1},{0,1},
+			{-1,1},{-1,0}
+		}
+	}
 
 	palettes={
 		base = {
@@ -76,11 +95,11 @@ function _init()
 
 	current_palette = palettes.base
 
-
 end
 
 function _update()
 	if not player.dead then
+		update_phase()
 		move()
 		player_animate(player.spr_set)
 		update_enemies()
@@ -101,6 +120,8 @@ function _draw()
 	end
 	spr(player.spr, player.x+shake_x, player.y, player.w/8, player.h/8, player.flp)
 	draw_enemies()
+
+	draw_phase_bar()
 
 	----- TEST -----
 	if test then

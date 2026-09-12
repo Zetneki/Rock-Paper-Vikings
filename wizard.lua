@@ -30,9 +30,6 @@ function update_wizard(e)
 		end
 
 	elseif e.w_state == "return" then
-
-		-- az origin-hoz kepesti jelenlegi szog alapjan
-		-- kiszamoljuk a kor legkozelebbi pontjat
 		local ox = e.x - e.origin_x
 		local oy = e.y - e.origin_y
 		local angle_to_e = atan2(ox, oy)
@@ -45,7 +42,6 @@ function update_wizard(e)
 		local rdist = sqrt(rdx*rdx + rdy*rdy)
 
 		if rdist < 1 then
-			-- eleg kozel a korvonalhoz, folytatjuk a korozest onnan
 			e.orbit_angle = angle_to_e
 			e.w_state = "orbit"
 		else
@@ -53,7 +49,6 @@ function update_wizard(e)
 			e.y += (rdy/rdist) * e.chase_speed
 		end
 
-		-- ha kozben a player ujra a kozelbe er, folytassa az uldozest
 		if dist < e.detect_range then
 			e.w_state = "follow"
 		end
