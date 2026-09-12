@@ -2,12 +2,17 @@ function update_phase()
 	phase.current -= 1
 
 	if phase.current <= 0 then
-		phase.char_index = phase.char_index % 4 + 1
+		local new_index
+		repeat
+			new_index = flr(rnd(4)) + 1
+		until new_index != phase.char_index
+
+		phase.char_index = new_index
 		phase.current = phase.duration
 
-		player.spr_set = phase.beats[phase.char_index]
+		player.spr_set = phase.chars[phase.char_index]
 		player.spr = p_spr_sets[player.spr_set]
-		player.anim = time()         
+		player.anim = time()
 	end
 end
 

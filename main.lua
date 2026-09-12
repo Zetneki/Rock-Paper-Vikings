@@ -65,19 +65,26 @@ function _init()
 
 	-- charater type timer
 	phase = {
-		duration=400,     -- 600 frame = 20mp at 30fps
-		current=400,
+		duration=100,     -- 600 frame = 20mp at 30fps
+		current=100,
 		char_index=1,    
 		dot_count=8, 
 	
-		-- melyik karakter melyik enemyt uti (rock-paper-scissors)
-		beats = {
+		-- char_index
+		chars = {
 			[1]="viking",
 			[2]="wizard",
 			[3]="knight",
 			[4]="cowboy"
 		},
-	
+
+		-- what class beats another (rock, paper scissors)
+		beats = {
+			viking=nil,
+			knight="cowboy",
+			cowboy="wizard",
+			wizard="knight"
+		},
 		-- depletion queue for timer rectangles
 		-- center always stays
 		cell_order = {

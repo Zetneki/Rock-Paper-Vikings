@@ -138,11 +138,16 @@ function check_enemy_collision()
 	for e in all(enemies) do
 		if not e.dead then
 			if player_enemy_overlap(e) then
-				if player_enemy_collision(e) then
+
+				local current_char = player.spr_set
+				local can_kill = phase.beats[current_char] == e.type
+
+				if player_enemy_collision(e) and can_kill then
 					enemy_hit(e)
 				else
 					player_dead()
 				end
+
 			end
 		end
 	end
