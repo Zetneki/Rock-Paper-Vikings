@@ -1,12 +1,14 @@
 function _init()
-	poke(0x5f2e, 1)
-	poke(0x5f5c, 255)
+	poke(0x5f2e, 1) -- allows hidden colors
+	poke(0x5f5c, 255) -- button press only activates once
+
+	test = false
 
 	gravity = 0.3
 	friction = 0.85
 
   player = {	
-		spr=3,
+		spr_set='viking',
 		flp=false,
     x=1,
     y=1,
@@ -35,35 +37,23 @@ function _init()
 
 	----- TEST -----
 
-	-- x1r, x2r, y1r, y2r = 0,0,0,0
+	if (test) x1r, x2r, y1r, y2r = 0,0,0,0
 
 	----------------
 
 	palettes={
-  normal = {
-		[0]=0, 1, 2, 3, 4, 5, 6, 7,
-		8, 9, 10, 11, 12, 13, 14, 15
-  },
-  ice = {
-		[0]=0, 1, 2, 3, 4, 5, 6, 7,
-		12, 12, 13, 13, 14, 15, 15, 15
-  },
-	lava = {
-		[0]=0, 1, 2, 3, 4, 5, 6, 7,
-		8, 8, 9, 9, 10, 10, 11, 8
-  },
-		hidden = {
+		base = {
 		[0]=-14,2,3,-7,4,-2,-1,15,-15,
 		1,-3,-13,13,-10,5,-11
 	}}
 
-	current_palette = palettes.hidden
+	current_palette = palettes.base
 
 end
 
 function _update()
 	move()
-	player_animate()
+	player_animate(player.spr_set)
 end
 
 function _draw() 
@@ -71,13 +61,17 @@ function _draw()
   map(0,0)
 	change_palette(current_palette)
   spr(player.spr,player.x,player.y,player.w / 8,player.h / 8,player.flp)	
-	print("⬅️➡️ to move")
-	print("❎ to jump, 🅾️ to dash")
-	print("double jump:" .. tostring(player.double_jump))
-	print("on wall left:" .. tostring(player.on_wall_left))
-	print("on wall right:" .. tostring(player.on_wall_right))
+
 	----- TEST -----
-	-- rectfill(x1r,y1r,x2r,y2r,7)
+	if test then
+		print("⬅️➡️ to move")
+		print("❎ to jump, 🅾️ to dash")
+		print("double jump:" .. tostring(player.double_jump))
+		print("on wall left:" .. tostring(player.on_wall_left))
+		print("on wall right:" .. tostring(player.on_wall_right))
+	end
+
+	if (test) rectfill(x1r,y1r,x2r,y2r,7)
 	----------------
 end
 

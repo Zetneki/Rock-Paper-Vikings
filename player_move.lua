@@ -2,31 +2,38 @@ function move()
 	player.dy += gravity
 	player.dx *= friction
 
+	-- if currently dashing, limits another dash for dash_timer frames
 	if player.dash_timer > 0 then
 		player.dash_timer -= 1
 	end
 
+	-- sets running left state
 	if btn(⬅️) then
 		player.dx -= player.acc
 		player.running = true
 		player.flp = true
 
+		-- dashing left
 		if btnp(🅾️) then
 			player.dx -= player.dash_speed
-			player.dash_timer = 6 -- ennyi kepkockaig ne limitaljon
+			player.dash_timer = 6
 		end
 	end
+
+	-- sets running right state
 	if btn(➡️) then
 		player.dx += player.acc
 		player.running = true
 		player.flp = false
 
+		-- dashing right
 		if btnp(🅾️) then
 			player.dx += player.dash_speed
 			player.dash_timer = 6
 		end
 	end
 
+	-- sets sliding state
 	if player.running
 	and not btn(⬅️)
 	and not btn(➡️)
@@ -36,18 +43,23 @@ function move()
     player.sliding=true
 	end
 
+	-- jumping
 	if btnp(❎)
 	and player.landed then
 		player.dy -= player.boost
 		player.landed = false 
+
+	-- double jump
 	elseif btnp(❎)
 	and player.double_jump
 	and not (player.on_wall_left or player.on_wall_right) then
+		-- making sure to not take double jump when on wall
 		player.dy = 0
 		player.dy -= player.boost
 		player.double_jump = false
 	end
 
+	-- gravity (falling)
 	if player.dy > 0 then
 		player.falling = true
 		player.landed = false
@@ -64,6 +76,8 @@ function move()
 			player.falling = false
 			player.y = (tile_y)*8 - player.h
 		end
+
+	--gravity (jumping)
 	elseif player.dy < 0 then
 		player.jumping = true
 
@@ -73,6 +87,7 @@ function move()
 			player.dy = 0
 			player.y = (tile_y+1)*8
 		end
+		-- jump smaller if not held on full duration
 		if player.jump_held and not btn(❎) then
 			player.dy /= 2
 		end
@@ -80,6 +95,8 @@ function move()
 
 	local dashing = player.dash_timer > 0 -- szerintem majd ide kell tenni a coin-t hogy van-e coin and ...
 
+
+	-- moving left
 	if player.dx < 0 then 
 		if not dashing then
 			player.dx = limit_speed(player.dx, player.max_dx)
@@ -94,6 +111,8 @@ function move()
 			player.x = (tile_x+1)*8
 		end
 	elseif player.dx > 0 then
+
+		-- max speed changes on dash value
 		if not dashing then
 			player.dx = limit_speed(player.dx, player.max_dx)
 		else
@@ -108,6 +127,7 @@ function move()
 		end
 	end
 
+	-- setting state for wall collision
 	if player.dx == 0
 	and btn(⬅️)
 	and player.falling then
@@ -121,6 +141,7 @@ function move()
 		player.on_wall_right = false
 	end
 
+	-- hitting left wall
 	if player.on_wall_left then
 		player.dy /= 2
 
@@ -129,6 +150,8 @@ function move()
 			player.dy -= player.boost
 			player.dx += player.boost/2
 		end
+
+	-- hitting right wall
 	elseif player.on_wall_right then
 		player.dy /= 2
 
@@ -139,6 +162,7 @@ function move()
 		end
 	end
 
+	-- calculating sliding
 	if player.sliding then
 		if abs(player.dx) < 0.2 then
 			player.dx = 0
@@ -159,29 +183,5 @@ function limit_speed(num, maximum)
 end
 
 
-function player_animate()
-	if player.jumping then
-		player.spr=7
-	elseif player.falling then
-		player.spr=8
-	elseif player.sliding then
-		player.spr=9
-	elseif player.running then
-		if time()-player.anim>0.1 then
-			player.anim=time()
-			player.spr+=1
-			if player.spr>6 then
-				player.spr=5
-			end
-		end
-	else --player idle
-		if time()-player.anim>0.3 then
-			player.anim=time()
-			player.spr+=1
-			if player.spr>4 then
-				player.spr=3
-			end
-		end
-	end
-end
+
 

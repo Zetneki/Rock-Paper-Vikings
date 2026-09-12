@@ -48,10 +48,12 @@ function collide(obj, aim, flag)
 	end
 
 	------ TEST ------
-	-- x1r=x1
-	-- y1r=y1
-	-- x2r=x2
-	-- y2r=y2
+	if test then
+		x1r=x1
+		y1r=y1
+		x2r=x2
+		y2r=y2
+	end
 	------------------
 
 	local tx1=flr(x1/8)
