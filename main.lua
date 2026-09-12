@@ -41,7 +41,18 @@ function _init()
 		double_jump=true,
 		on_wall_left=false,
 		on_wall_right=false,
-		dead=false
+		dead=false,
+
+		-- cowboy quick time event
+		struggle_progress=0,
+		struggle_last_btn=nil, 
+		trapped_by=nil,
+		pre_trap_x=0,
+		pre_trap_y=0,
+		release_timer=0,
+		release_duration=10,
+		release_start_x=0,
+		release_start_y=0,
   }
 
 	-- enemy:
@@ -52,10 +63,9 @@ function _init()
 	-- type,
 	enemies = {}
 
-	spawn_enemy(24,32,"knight")
-	spawn_enemy(88,32,"knight")
-	spawn_enemy(88, 24, "wizard")
-
+	--spawn_enemy(24,32,"knight")
+	--spawn_enemy(88, 24, "wizard")
+	spawn_enemy(24,64,"cowboy")
 
 	palettes={
 		base = {

@@ -1,4 +1,11 @@
 function move()
+	if player.trapped_by then
+		-- gravitacio es minden mozgas ki, csak struggle szamit
+		player.dx = 0
+		player.dy = 0
+		return
+	end
+
 	player.dy += gravity
 	player.dx *= friction
 

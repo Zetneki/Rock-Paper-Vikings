@@ -28,7 +28,16 @@ function spawn_enemy(x,y,type)
     orbit_angle=rnd(1),
     detect_range=40, 
     chase_speed=0.75,
-    w_state="orbit"
+    w_state="orbit",
+
+    -- cowboy
+    c_state="idle",       
+    pull_range=40,         
+    pull_strength=0.3,
+    pull_duration=60,
+    pause_duration=60,
+    c_timer=0,
+    struggle_needed=5,
 	}
 
 	add(enemies,enemy)
@@ -58,10 +67,6 @@ function update_enemies()
 
 end
 
-function update_cowboy(e)
-
-end
-
 function update_dead_enemy(e)
 
 	e.dy += gravity
@@ -80,11 +85,22 @@ function draw_enemies()
       local e_spr = 128
       if (e.dead) e_spr = 129
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
-    end
-    if e.type == "wizard" then
+    elseif e.type == "wizard" then
       local e_spr = 144
       if (e.dead) e_spr = 145
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+    elseif e.type == "cowboy" then
+      local e_spr = 160
+      if (e.dead) e_spr = 161
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+
+      -- progress bar
+      if player.trapped_by and player.trapped_by.c_state == "pulling" then
+        local bar_w = 16
+        local fill = flr(bar_w * player.struggle_progress / player.trapped_by.struggle_needed)
+        rect(player.x-4, player.y-8, player.x-4+bar_w, player.y-5, 7)
+        rectfill(player.x-4, player.y-8, player.x-4+fill, player.y-5, 8)
+    end
     end
   end
 end
