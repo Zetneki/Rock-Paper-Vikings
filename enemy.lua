@@ -38,6 +38,7 @@ function spawn_enemy(x,y,type)
     pause_duration=60,
     c_timer=0,
     struggle_needed=5,
+    pulse_frame=0
 	}
 
 	add(enemies,enemy)
@@ -94,16 +95,44 @@ function draw_enemies()
       if (e.dead) e_spr = 161
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
 
-      -- progress bar
       if player.trapped_by and player.trapped_by.c_state == "pulling" then
+
+        local e = player.trapped_by
+    
+        -- progress bar
         local bar_w = 16
-        local fill = flr(bar_w * player.struggle_progress / player.trapped_by.struggle_needed)
+        local fill = flr(bar_w * player.struggle_progress / e.struggle_needed)
         rect(player.x-4, player.y-8, player.x-4+bar_w, player.y-5, 7)
-        rectfill(player.x-4, player.y-8, player.x-4+fill, player.y-5, 8)
-    end
+        rectfill(player.x-4, player.y-8, player.x-4+fill, player.y-5, 3)
+    
+        -- next button
+        local next_btn = player.struggle_last_btn == "l" and "r" or "l"
+    
+        -- pulsing, faster with less remaining time
+        local urgency = 1 - (e.c_timer / e.pull_duration)  -- 0 -> 1
+        local pulse_speed = 4 + urgency
+        local pulse = sin(e.pulse_frame/30 * pulse_speed)
+    
+        -- pulsing color
+        local hl_col = pulse > 0 and 10 or 7
+        local dim_col = 5  
+    
+        -- small bounce for next button
+        local bounce = pulse > 0 and -1 or 0
+    
+        if next_btn == "l" then
+            print("⬅️", player.x-6, player.y-16+bounce, hl_col)
+            print("➡️", player.x+4, player.y-16, dim_col)
+        else
+            print("⬅️", player.x-6, player.y-16, dim_col)
+            print("➡️", player.x+4, player.y-16+bounce, hl_col)
+        end
+    
     end
   end
+  end
 end
+
 
 function check_enemy_collision()
 	for e in all(enemies) do

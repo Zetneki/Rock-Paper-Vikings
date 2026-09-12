@@ -53,6 +53,7 @@ function _init()
 		release_duration=10,
 		release_start_x=0,
 		release_start_y=0,
+		shake_timer=0
   }
 
 	-- enemy:
@@ -91,7 +92,14 @@ function _draw()
   cls()
   map(0,0)
 	change_palette(current_palette)
-  spr(player.spr,player.x,player.y,player.w / 8,player.h / 8,player.flp)
+
+	--shakes player when struggling
+	local shake_x = 0
+	if player.shake_timer and player.shake_timer > 0 then
+			shake_x = (rnd(2)-1)
+			player.shake_timer -= 1
+	end
+	spr(player.spr, player.x+shake_x, player.y, player.w/8, player.h/8, player.flp)
 	draw_enemies()
 
 	----- TEST -----

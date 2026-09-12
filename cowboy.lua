@@ -12,6 +12,7 @@ function update_cowboy(e)
 		if dist < e.pull_range then
 			e.c_state = "pulling"
 			e.c_timer = e.pull_duration
+      e.pulse_frame = 0
 
 			player.pre_trap_x = player.x
 			player.pre_trap_y = player.y
@@ -25,14 +26,17 @@ function update_cowboy(e)
 		end
 
 		player.trapped_by = e
+    e.pulse_frame += 1
 
 		-- struggle input check
 		if btnp(⬅️) and player.struggle_last_btn ~= "l" then
 			player.struggle_progress += 1
 			player.struggle_last_btn = "l"
+      player.shake_timer = 4
 		elseif btnp(➡️) and player.struggle_last_btn ~= "r" then
 			player.struggle_progress += 1
 			player.struggle_last_btn = "r"
+      player.shake_timer = 4
 		end
 
 		player.struggle_progress -= 0.05
@@ -42,7 +46,6 @@ function update_cowboy(e)
 
 		if player.struggle_progress >= e.struggle_needed
 		or e.c_timer <= 0 then
-			-- mindket esetben: elinditjuk a visszaroppenest
 			player.struggle_progress = 0
 			player.struggle_last_btn = nil
 
@@ -82,6 +85,7 @@ function update_cowboy(e)
 			if dist < e.pull_range then
 				e.c_state = "pulling"
 				e.c_timer = e.pull_duration
+        e.pulse_frame = 0
 
 				player.pre_trap_x = player.x
 				player.pre_trap_y = player.y
