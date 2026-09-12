@@ -13,11 +13,22 @@ function spawn_enemy(x,y,type)
 		anim=0,
     dead=false,
 
+    -- knight
     state="idle",
     timer=0,
     dir=1,
     speed=1.2,
-    attack_range=40
+    attack_range=40,
+
+    -- wizard
+    origin_x=x,
+    origin_y=y,
+    orbit_radius=16,
+    orbit_speed=0.005,
+    orbit_angle=rnd(1),
+    detect_range=40, 
+    chase_speed=0.75,
+    w_state="orbit"
 	}
 
 	add(enemies,enemy)
@@ -47,63 +58,6 @@ function update_enemies()
 
 end
 
-function move_enemy(e)
-  
-  limit_speed(e.dy, e.max_dy)
-  limit_speed(e.dx, e.max_dx)
-
-	-- horizontal collision
-	if e.dx < 0 then
-		local hit, tx = collide(e,"left",0)
-		if hit then
-			e.x = (tx+1)*8
-			e.dx = 0
-		else
-			e.x += e.dx
-		end
-
-	elseif e.dx > 0 then
-		local hit, tx = collide(e,"right",0)
-		if hit then
-			e.x = tx*8 - e.w
-			e.dx = 0
-		else
-			e.x += e.dx
-		end
-	end
-
-
-	-- vertical collision
-	if e.dy < 0 then
-		local hit, tx, ty = collide(e,"up",0)
-		if hit then
-			e.y = (ty+1)*8
-			e.dy = 0
-		else
-			e.y += e.dy
-		end
-
-	elseif e.dy > 0 then
-		local hit, tx, ty = collide(e,"down",0)
-		if hit then
-			e.y = ty*8 - e.h
-			e.dy = 0
-
-			if e.state == "jump" then
-				e.state = "cooldown"
-				e.timer = 20
-			end
-		else
-			e.y += e.dy
-		end
-	end
-
-end
-
-function update_wizard(e)
-
-end
-
 function update_cowboy(e)
 
 end
@@ -125,6 +79,11 @@ function draw_enemies()
     if e.type == "knight" then
       local e_spr = 128
       if (e.dead) e_spr = 129
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+    end
+    if e.type == "wizard" then
+      local e_spr = 144
+      if (e.dead) e_spr = 145
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
     end
   end

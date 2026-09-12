@@ -54,6 +54,7 @@ function _init()
 
 	spawn_enemy(24,32,"knight")
 	spawn_enemy(88,32,"knight")
+	spawn_enemy(88, 24, "wizard")
 
 
 	palettes={

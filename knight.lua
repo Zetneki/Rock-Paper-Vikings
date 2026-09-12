@@ -38,7 +38,7 @@ function update_knight(e)
 
 	elseif e.state == "jump" then
 
-		move_enemy(e)
+		move_knight(e)
 
 	elseif e.state == "cooldown" then
 
@@ -86,4 +86,58 @@ function player_in_knight_range(e)
 	end
 
 	return true
+end
+
+
+function move_knight(e)
+  
+  limit_speed(e.dy, e.max_dy)
+  limit_speed(e.dx, e.max_dx)
+
+	-- horizontal collision
+	if e.dx < 0 then
+		local hit, tx = collide(e,"left",0)
+		if hit then
+			e.x = (tx+1)*8
+			e.dx = 0
+		else
+			e.x += e.dx
+		end
+
+	elseif e.dx > 0 then
+		local hit, tx = collide(e,"right",0)
+		if hit then
+			e.x = tx*8 - e.w
+			e.dx = 0
+		else
+			e.x += e.dx
+		end
+	end
+
+
+	-- vertical collision
+	if e.dy < 0 then
+		local hit, tx, ty = collide(e,"up",0)
+		if hit then
+			e.y = (ty+1)*8
+			e.dy = 0
+		else
+			e.y += e.dy
+		end
+
+	elseif e.dy > 0 then
+		local hit, tx, ty = collide(e,"down",0)
+		if hit then
+			e.y = ty*8 - e.h
+			e.dy = 0
+
+			if e.state == "jump" then
+				e.state = "cooldown"
+				e.timer = 20
+			end
+		else
+			e.y += e.dy
+		end
+	end
+
 end
