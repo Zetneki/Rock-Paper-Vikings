@@ -64,9 +64,6 @@ function _init()
 
 	current_palette = palettes.base
 
-	extra_x = 0
-	extra_y = 0
-
 
 end
 
@@ -76,11 +73,6 @@ function _update()
 		player_animate(player.spr_set)
 		update_enemies()
 	end
-	move()
-	player_animate(player.spr_set)
-
-	extra_x = max(0, ceil(abs(player.dx)) - 1)
-	extra_y = max(0, ceil(abs(player.dy)) - 1)
 
 end
 
@@ -100,14 +92,6 @@ function _draw()
 		print("on wall right:" .. tostring(player.on_wall_right))
 		
 	end
-
-
-	print(player.slamming)
-
-	print(flr((player.y+player.h)/8))
-	--print(player.dy-1)
-	print(flr((player.y+player.h+extra_y)/8))
-	--print(extra_y)
 
 end
 
