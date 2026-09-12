@@ -9,9 +9,10 @@ function _init()
 
   player = {	
 		spr_set='viking',
+		spr=p_spr_sets['viking'],
 		flp=false,
-    x=1,
-    y=1,
+    x=140,
+    y=500,
 		w=8,
 		h=8,
     dy=0,
@@ -51,19 +52,41 @@ function _init()
 
 	current_palette = palettes.base
 
-	extra_x = 0
-	extra_y = 0
+	-- cam_x=0
+	cam_y=0
+
+	map_start=128
+	map_end=256
+	map_ceiling=1024
+	map_floor=1
+	camera_min_y = map_floor
+	camera_locked = false
+
+	score=0
+	last_height=1000
 
 
+
+	generate_platforms(
+		map_start, map_end,   -- x tartomány pixelben (vagy tile*8)
+		0, 511,          -- y tartomány: kezdő magasság -> plafon
+		66,                        -- wall_spr — állítsd a saját fal sprite indexedre
+		18, 24,                    -- min/max függőleges rés (a 26.7px max ugrás alatt marad)
+		3, 6,                       -- platform hossza 3-6 tile között
+		0.4
+	)
 end
 
 function _update()
 	move()
 	player_animate(player.spr_set)
 
-	extra_x = max(0, ceil(abs(player.dx)) - 1)
-	extra_y = max(0, ceil(abs(player.dy)) - 1)
+	if last_height-player.y > 50 then
+		last_height = player.y
+		score+=10
+	end
 
+  update_camera()
 end
 
 function _draw() 
@@ -79,17 +102,9 @@ function _draw()
 		print("double jump:" .. tostring(player.double_jump))
 		print("on wall left:" .. tostring(player.on_wall_left))
 		print("on wall right:" .. tostring(player.on_wall_right))
-		
 	end
 
-
-	print(player.slamming)
-
-	print(flr((player.y+player.h)/8))
-	--print(player.dy-1)
-	print(flr((player.y+player.h+extra_y)/8))
-	--print(extra_y)
-
+	print("score: " .. score, cam_x, cam_y)
 end
 
 
