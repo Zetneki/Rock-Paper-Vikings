@@ -33,7 +33,20 @@ function _init()
 		double_jump=true,
 		on_wall_left=false,
 		on_wall_right=false,
+		dead=false
   }
+
+	-- enemy:
+	-- x,
+	-- y,
+	-- h,
+	-- w,
+	-- type,
+	enemies = {}
+
+	spawn_enemy(24,24,"knight")
+	spawn_enemy(10*8,8*8,"knight")
+
 
 	----- TEST -----
 
@@ -52,15 +65,19 @@ function _init()
 end
 
 function _update()
-	move()
-	player_animate(player.spr_set)
+	if not player.dead then
+		move()
+		player_animate(player.spr_set)
+		update_enemies()
+	end
 end
 
 function _draw() 
   cls()
   map(0,0)
 	change_palette(current_palette)
-  spr(player.spr,player.x,player.y,player.w / 8,player.h / 8,player.flp)	
+  spr(player.spr,player.x,player.y,player.w / 8,player.h / 8,player.flp)
+	draw_enemies()
 
 	----- TEST -----
 	if test then
