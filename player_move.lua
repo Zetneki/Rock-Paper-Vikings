@@ -12,12 +12,6 @@ function move()
 		player.dx -= player.acc
 		player.running = true
 		player.flp = true
-
-		-- dashing left
-		if btnp(🅾️) then
-			player.dx -= player.dash_speed
-			player.dash_timer = 6
-		end
 	end
 
 	-- sets running right state
@@ -25,13 +19,9 @@ function move()
 		player.dx += player.acc
 		player.running = true
 		player.flp = false
-
-		-- dashing right
-		if btnp(🅾️) then
-			player.dx += player.dash_speed
-			player.dash_timer = 6
-		end
 	end
+
+	dash()
 
 	-- sets sliding state
 	if player.running
@@ -44,13 +34,13 @@ function move()
 	end
 
 	-- jumping
-	if btnp(❎)
+	if btnp(⬆️)
 	and player.landed then
 		player.dy -= player.boost
 		player.landed = false 
 
 	-- double jump
-	elseif btnp(❎)
+	elseif btnp(⬆️)
 	and player.double_jump
 	and not (player.on_wall_left or player.on_wall_right) then
 		-- making sure to not take double jump when on wall
@@ -59,13 +49,19 @@ function move()
 		player.double_jump = false
 	end
 
+	slam()
+
 	-- gravity (falling)
 	if player.dy > 0 then
 		player.falling = true
 		player.landed = false
 		player.jumping = false
 
-		player.dy = limit_speed(player.dy, player.max_dy)
+		if not player.slamming then
+			player.dy = limit_speed(player.dy, player.max_dy)
+		else 
+			player.dy = limit_speed(player.dy, player.slam_max_dy) 
+		end
 
 		local hit, tile_x, tile_y = collide(player, "down", 0)
 
@@ -74,6 +70,7 @@ function move()
 			player.landed = true
 			player.double_jump = true  -- mikor coin-hoz kotjuk, akkor tesszuk majd igazza ha van
 			player.falling = false
+			player.slamming=false
 			player.y = (tile_y)*8 - player.h
 		end
 
@@ -88,17 +85,17 @@ function move()
 			player.y = (tile_y+1)*8
 		end
 		-- jump smaller if not held on full duration
-		if player.jump_held and not btn(❎) then
+		if player.jump_held and not btn(⬆️) then
 			player.dy /= 2
 		end
 	end
 
-	local dashing = player.dash_timer > 0 -- szerintem majd ide kell tenni a coin-t hogy van-e coin and ...
-
+	
+	player.dashing = player.dash_timer > 0 -- szerintem majd ide kell tenni a coin-t hogy van-e coin and ...
 
 	-- moving left
 	if player.dx < 0 then 
-		if not dashing then
+		if not player.dashing then
 			player.dx = limit_speed(player.dx, player.max_dx)
 		else
 			player.dx = limit_speed(player.dx, player.max_dash_dx)
@@ -113,7 +110,7 @@ function move()
 	elseif player.dx > 0 then
 
 		-- max speed changes on dash value
-		if not dashing then
+		if not player.dashing then
 			player.dx = limit_speed(player.dx, player.max_dx)
 		else
 			player.dx = limit_speed(player.dx, player.max_dash_dx)
@@ -145,9 +142,9 @@ function move()
 	if player.on_wall_left then
 		player.dy /= 2
 
-		if btnp(❎) then
+		if btnp(⬆️) then
 			player.dy = 0
-			player.dy -= player.boost
+			player.dy -= player.boost/2
 			player.dx += player.boost/2
 		end
 
@@ -155,9 +152,9 @@ function move()
 	elseif player.on_wall_right then
 		player.dy /= 2
 
-		if btnp(❎) then
+		if btnp(⬆️) then
 			player.dy = 0
-			player.dy -= player.boost
+			player.dy -= player.boost/2
 			player.dx -= player.boost/2
 		end
 	end
@@ -170,7 +167,7 @@ function move()
 		end
 	end
 
-	player.jump_held = btn(❎)
+	player.jump_held = btn(⬆️)
 
 	player.x += player.dx
 	player.y += player.dy
@@ -182,6 +179,46 @@ function limit_speed(num, maximum)
 	return mid(-maximum, num, maximum)
 end
 
+function dash() 
 
+	-- if dash is ready and right or left button is pressed then dash
+	if btnp(➡️)
+	and player.dash_ready_r
+	and not player.dash_ready_l
+	and time()-player.dash_act_time<0.25 then
+		player.dx += player.dash_speed
+		player.dash_timer = 6
+	elseif btnp(⬅️)
+	and player.dash_ready_l
+	and not player.dash_ready_r
+	and time()-player.dash_act_time<0.25 then
+		player.dx -= player.dash_speed
+		player.dash_timer = 6
 
+	-- if right or left button is pressed, sets dash_ready to true
+	elseif btnp(➡️) then
+		player.dash_ready_l = false
+		player.dash_ready_r = true
+		player.dash_act_time = time()
+	elseif btnp(⬅️) then
+		player.dash_ready_r = false
+		player.dash_ready_l = true
+		player.dash_act_time = time()
+	end
+end
 
+-- if slam double jump off
+function slam()
+
+	if player.slam_ready
+
+	and btnp(⬇️)
+	and time()-player.slam_act_time<0.25 then
+		player.double_jump = false
+		player.dy += 14
+		player.slamming = true
+	elseif btnp(⬇️) then
+		player.slam_ready = true
+		player.slam_act_time = time()
+	end
+end

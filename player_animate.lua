@@ -1,20 +1,30 @@
 p_spr_sets={
 	-- each sprite set has a starter number
-	-- sets are 11 long, values are the starter numbers for the key's character
+	-- sets are 12 long, values are the starter numbers for the key's character
 	viking=1,
-	wizard=12,
-	knight=23,
-	cowboy=34
+	wizard=13,
+	knight=24,
+	cowboy=35
 }
 
 function player_animate(char)
 
 	local spr_s = p_spr_sets[char]
 
-	if player.jumping then
+	if player.dashing then
+		player.spr=spr_s+9
+	elseif player.slamming then
+		player.spr=spr_s+11
+	elseif player.jumping and player.running then
 		player.spr=spr_s+7
-	elseif player.falling then
+	elseif player.on_wall_left or player.on_wall_right then
+		player.spr=spr_s+10
+	elseif player.falling and player.running then
 		player.spr=spr_s+8
+	elseif player.jumping then
+		player.spr=spr_s+5
+	elseif player.falling then
+		player.spr=spr_s+6
 	elseif player.sliding then
 		player.spr=spr_s+4
 	elseif player.running then
