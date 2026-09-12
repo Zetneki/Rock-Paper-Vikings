@@ -10,7 +10,7 @@ function _init()
   player = {	
 		spr_set='viking',
 		flp=false,
-    x=1,
+    x=10*8,
     y=1,
 		w=8,
 		h=8,
@@ -52,8 +52,8 @@ function _init()
 	-- type,
 	enemies = {}
 
-	spawn_enemy(24,24,"knight")
-	spawn_enemy(10*8,8*8,"knight")
+	spawn_enemy(24,32,"knight")
+	spawn_enemy(88,32,"knight")
 
 
 	palettes={
