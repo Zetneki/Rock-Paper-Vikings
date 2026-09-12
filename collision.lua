@@ -4,70 +4,52 @@ function collide(obj, aim, flag)
 	local w = obj.w
 	local h = obj.h
 
-	local x1,y1,x2,y2 = 0,0,0,0
-
-	local extra_x = ceil(abs(obj.dx)) - 1
-	local extra_y = ceil(abs(obj.dy)) - 1
+	-- extra tiles based on speed
+	local extra_x = max(0, ceil(abs(obj.dx)) - 1)
+	local extra_y = max(0, ceil(abs(obj.dy)) - 1)
 
 	if aim=="left" then
-		x1=x-1  y1=y
-		x2=x-1  y2=y+h-1
+		local ty1, ty2 = flr((y)/8), flr((y+h-1)/8)
+		local tx_near, tx_far = flr((x-1)/8), flr((x-1-extra_x)/8)
 
-		if extra_x > 0 then
-        x1 -= extra_x
-        x2 -= extra_x
-    end
-
-	elseif aim=="right" then
-		x1=x+w    y1=y
-		x2=x+w    y2=y+h-1
-
-		if extra_y > 0 then
-        x1 += extra_y
-        x2 += extra_y
-    end
-		
-	elseif aim=="up" then
-		x1=x    y1=y-1
-		x2=x+w-1  y2=y-1
-
-		if extra_y > 0 then
-        y1 -= extra_y
-        y2 -= extra_y
-    end
-		
-	elseif aim=="down" then
-		x1=x      y1=y+h
-		x2=x+w-1  y2=y+h
-
-		if extra_y > 0 then
-				y1 += extra_y
-				y2 += extra_y
+		-- check exta tiles for collision
+		for tx = tx_near, tx_far, -1 do
+			for ty = ty1, ty2 do
+				if (fget(mget(tx,ty),flag)) return true, tx, ty 
+			end
 		end
 
+	elseif aim=="right" then
+		local ty1, ty2 = flr((y)/8), flr((y+h-1)/8)
+		local tx_near, tx_far = flr((x+w)/8), flr((x+w+extra_x)/8)
+
+		-- check exta tiles for collision
+		for tx = tx_near, tx_far do
+			for ty = ty1, ty2 do
+				if (fget(mget(tx,ty), flag)) return true, tx, ty 
+			end
+		end
+		
+	elseif aim=="up" then
+		local tx1, tx2 = flr((x)/8), flr((x+w-1)/8)
+		local ty_near, ty_far = flr((y-1)/8), flr((y-1-extra_y)/8)
+
+		-- check exta tiles for collision
+		for ty = ty_near, ty_far, -1 do
+			for tx = tx1, tx2 do
+				if (fget(mget(tx,ty), flag)) return true, tx, ty
+			end
+		end
+		
+	elseif aim=="down" then
+		local tx1, tx2 = flr((x)/8), flr((x+w-1)/8)
+		local ty_near, ty_far = flr((y+h)/8), flr((y+h+extra_y)/8)
+
+		-- check exta tiles for collision
+		for ty = ty_near, ty_far do
+			for tx = tx1, tx2 do
+				if (fget(mget(tx,ty), flag)) return true, tx, ty 
+			end
+		end
 	end
-
-	------ TEST ------
-	if test then
-		x1r=x1
-		y1r=y1
-		x2r=x2
-		y2r=y2
-	end
-	------------------
-
-	local tx1=flr(x1/8)
-	local ty1=flr(y1/8)
-	local tx2=flr(x2/8)
-	local ty2=flr(y2/8)
-
-	if fget(mget(tx1,ty1),flag)
-	or fget(mget(tx2,ty2),flag)
-	or fget(mget(tx1,ty2),flag)
-	or fget(mget(tx2,ty1),flag) then
-		return true, tx1, ty1
-	else
-		return false
-	end
-
 end

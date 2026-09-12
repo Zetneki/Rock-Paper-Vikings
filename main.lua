@@ -26,20 +26,22 @@ function _init()
 		falling=false,
 		sliding=false,
 		landed=false,
+		dash_act_time=0,
+		dash_ready_l=false,
+		dash_ready_r=false,
+		dashing=false,
 		dash_timer=0,
 		max_dash_dx = 6,
 		dash_speed=6,
+		slam_act_time=0,
+		slam_ready=false,
+		slamming=false,
+		slam_max_dy=14,
 		jump_held=false,
 		double_jump=true,
 		on_wall_left=false,
 		on_wall_right=false,
   }
-
-	----- TEST -----
-
-	if (test) x1r, x2r, y1r, y2r = 0,0,0,0
-
-	----------------
 
 	palettes={
 		base = {
@@ -49,11 +51,19 @@ function _init()
 
 	current_palette = palettes.base
 
+	extra_x = 0
+	extra_y = 0
+
+
 end
 
 function _update()
 	move()
 	player_animate(player.spr_set)
+
+	extra_x = max(0, ceil(abs(player.dx)) - 1)
+	extra_y = max(0, ceil(abs(player.dy)) - 1)
+
 end
 
 function _draw() 
@@ -69,10 +79,17 @@ function _draw()
 		print("double jump:" .. tostring(player.double_jump))
 		print("on wall left:" .. tostring(player.on_wall_left))
 		print("on wall right:" .. tostring(player.on_wall_right))
+		
 	end
 
-	if (test) rectfill(x1r,y1r,x2r,y2r,7)
-	----------------
+
+	print(player.slamming)
+
+	print(flr((player.y+player.h)/8))
+	--print(player.dy-1)
+	print(flr((player.y+player.h+extra_y)/8))
+	--print(extra_y)
+
 end
 
 
