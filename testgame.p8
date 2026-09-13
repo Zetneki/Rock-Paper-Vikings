@@ -1,27 +1,1897 @@
 pico-8 cartridge // http://www.pico-8.com
 version 43
 __lua__
-#include collision.lua
-#include player_move.lua
-#include player_animate.lua
-#include player_move.lua
-#include player_animate.lua
-#include main.lua
-#include colors.lua
-#include enemy.lua
-#include knight.lua
-#include wizard.lua
-#include cowboy.lua
-#include timer.lua
-#include generate_chunk.lua
-#include spawn.lua
-#include camera.lua
-#include draw_world.lua
-#include menu.lua
-#include game.lua
-#include gameover.lua
-#include name_entry.lua
-#include scoreboard.lua
+function update_camera()
+
+  cam_x = player.x - 64 + (player.w/2)
+  if cam_x < map_start then cam_x = map_start end
+  if cam_x > map_end - 128 then cam_x = map_end - 128 end
+
+    local desired_cam_y = player.y - 64 + (player.h/2)
+
+    if camera_min_y == nil then
+      camera_min_y = desired_cam_y   
+    end
+
+    if desired_cam_y > camera_min_y then
+      cam_y = camera_min_y           
+    else
+      camera_min_y = desired_cam_y  
+      cam_y = desired_cam_y
+    end
+
+  if score > 200 then
+    auto_scroll_active = true
+  end
+
+  if score > 300 and auto_scroll_active then
+    auto_scroll_speed = 0.2
+  end
+
+  if score > 400 and auto_scroll_active then
+    auto_scroll_speed = 0.3
+  end
+
+  if score > 500 and auto_scroll_active then
+    auto_scroll_speed = 0.4
+  end
+
+  if auto_scroll_active then
+    camera_min_y -= auto_scroll_speed   
+    if camera_min_y < cam_y then
+        cam_y = camera_min_y
+    end
+  end
+
+  camera(cam_x, cam_y)
+end
+-->8
+function collide(obj, aim, flag)
+	local x = obj.x
+	local y = obj.y
+	local w = obj.w
+	local h = obj.h
+
+	-- extra tiles based on speed
+	local extra_x = max(0, ceil(abs(obj.dx)) - 1)
+	local extra_y = max(0, ceil(abs(obj.dy)) - 1)
+
+	if aim=="left" then
+		local ty1, ty2 = flr((y)/8), flr((y+h-1)/8)
+		local tx_near, tx_far = flr((x-1)/8), flr((x-1-extra_x)/8)
+
+		-- check exta tiles for collision
+		for tx = tx_near, tx_far, -1 do
+			for ty = ty1, ty2 do
+				local map_row = world_to_map_row(ty)
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end 
+			end
+		end
+
+	elseif aim=="right" then
+		local ty1, ty2 = flr((y)/8), flr((y+h-1)/8)
+		local tx_near, tx_far = flr((x+w)/8), flr((x+w+extra_x)/8)
+
+		-- check exta tiles for collision
+		for tx = tx_near, tx_far do
+			for ty = ty1, ty2 do
+				local map_row = world_to_map_row(ty)
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end 
+			end
+		end
+		
+	elseif aim=="up" then
+		local tx1, tx2 = flr((x)/8), flr((x+w-1)/8)
+		local ty_near, ty_far = flr((y-1)/8), flr((y-1-extra_y)/8)
+
+		-- check exta tiles for collision
+		for ty = ty_near, ty_far, -1 do
+			local map_row = world_to_map_row(ty)
+			for tx = tx1, tx2 do
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end
+			end
+		end
+		
+	elseif aim=="down" then
+		local tx1, tx2 = flr((x)/8), flr((x+w-1)/8)
+		local ty_near, ty_far = flr((y+h)/8), flr((y+h+extra_y)/8)
+
+		-- check exta tiles for collision
+		for ty = ty_near, ty_far do
+			local map_row = world_to_map_row(ty)
+			for tx = tx1, tx2 do
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end
+			end
+		end
+	end
+end
+
+function world_to_map_row(world_ty)
+	local r = world_ty % 64
+	if r < 0 then r += 64 end
+	return r
+end
+-->8
+function change_ingame(palette)
+  pal(palette)
+end
+
+function change_palette(palette)
+  poke(0x5f2e, 1)
+  pal(palette, 1)
+end
+-->8
+function update_cowboy(e)
+
+	local center_x = e.x + e.w/2
+	local center_y = e.y + e.h/2
+
+	local dx = player.x - center_x
+	local dy = player.y - center_y
+	local dist = sqrt(dx*dx + dy*dy)
+
+	local margin = 16
+	local on_screen = e.y > cam_y - margin and e.y < cam_y + 128 + margin and e.x > cam_x - margin and e.x < cam_x + 128 + margin
+
+	if e.c_state == "idle" then
+		if dist < e.pull_range and on_screen then
+			e.c_state = "pulling"
+			e.c_state = "pulling"
+			e.c_timer = e.pull_duration
+      e.pulse_frame = 0
+
+			player.pre_trap_x = player.x
+			player.pre_trap_y = player.y
+		end
+
+	elseif e.c_state == "pulling" then
+
+		if dist > 1 then
+			player.x -= (dx/dist) * e.pull_strength
+			player.y -= (dy/dist) * e.pull_strength
+		end
+
+		player.trapped_by = e
+    e.pulse_frame += 1
+
+		-- struggle input check
+		if btnp(⬅️) and player.struggle_last_btn ~= "l" then
+			player.struggle_progress += 1
+			player.struggle_last_btn = "l"
+      player.shake_timer = 4
+		elseif btnp(➡️) and player.struggle_last_btn ~= "r" then
+			player.struggle_progress += 1
+			player.struggle_last_btn = "r"
+      player.shake_timer = 4
+		end
+
+		player.struggle_progress -= 0.05
+		player.struggle_progress = mid(0, player.struggle_progress, e.struggle_needed)
+
+		e.c_timer -= 1
+
+		if player.struggle_progress >= e.struggle_needed
+		or e.c_timer <= 0 then
+			player.struggle_progress = 0
+			player.struggle_last_btn = nil
+
+			player.release_start_x = player.x
+			player.release_start_y = player.y
+			player.release_timer = player.release_duration
+
+			e.c_state = "release"
+		end
+
+	elseif e.c_state == "release" then
+
+		player.release_timer -= 1
+
+		local t = 1 - (player.release_timer / player.release_duration)
+		t = mid(0, t, 1)
+
+		player.x = lerp(player.release_start_x, player.pre_trap_x, t)
+		player.y = lerp(player.release_start_y, player.pre_trap_y, t)
+
+		if player.release_timer <= 0 then
+			player.x = player.pre_trap_x
+			player.y = player.pre_trap_y
+			player.dx = 0
+			player.dy = 0
+			player.trapped_by = nil
+
+			e.c_state = "pause"
+			e.c_timer = e.pause_duration
+		end
+
+	elseif e.c_state == "pause" then
+
+		e.c_timer -= 1
+
+		if e.c_timer <= 0 then
+			if dist < e.pull_range and on_screen then
+				e.c_state = "pulling"
+				e.c_timer = e.pull_duration
+        e.pulse_frame = 0
+
+				player.pre_trap_x = player.x
+				player.pre_trap_y = player.y
+			else
+				e.c_state = "idle"
+			end
+		end
+
+	end
+
+	e.flp = player.x < e.x
+
+	e.range_angle -= e.range_rot_speed
+	if e.range_angle < 0 then
+		e.range_angle += 1
+	end
+
+	animate_cowboy(e)
+
+end
+
+function draw_cowboy_range(e)
+
+	if e.c_state == "pulling" then return end
+
+	local center_x = e.x + e.w/2
+	local center_y = e.y + e.h/2
+
+	for i=0,e.range_dot_count-1 do
+		local angle = e.range_angle + i/e.range_dot_count
+		local dot_x = center_x + cos(angle) * e.pull_range
+		local dot_y = center_y + sin(angle) * e.pull_range
+
+		pset(dot_x, dot_y, 1)
+	end
+
+end
+
+function animate_cowboy(e)
+
+	local cowboy_spr_base=160
+
+	if time()-e.anim > 0.3 then
+		e.anim = time()
+		e.spr = (e.spr == cowboy_spr_base) and cowboy_spr_base+1 or cowboy_spr_base
+	end
+
+end
+
+function lerp(a, b, t)
+	return a + (b-a) * t
+end
+-->8
+function draw_world_wrapped(cam_x, cam_y)
+	local first_visible_ty = flr(cam_y/8) - 1
+	local last_visible_ty = first_visible_ty + 17
+
+	local first_visible_tx = flr(cam_x/8) - 1
+	local last_visible_tx = first_visible_tx + 17   
+
+	for world_ty=first_visible_ty, last_visible_ty do
+		local map_row = world_to_map_row(world_ty)
+		for tx=first_visible_tx, last_visible_tx do
+			local tile = mget(tx, map_row)
+			if tile ~= 0 then
+				spr(tile, tx*8, world_ty*8)
+			end
+		end
+	end
+end
+-->8
+function spawn_enemy(x,y,type)
+	local enemy = {
+		x=x,
+		y=y,
+		w=8,
+		h=8,
+		type=type, -- "knight", "wizard", "cowboy"
+		dx=0,
+		dy=0,
+    max_dx = 4,
+    max_dy = 6,
+		flp=false,
+		anim=0,
+    dead=false,
+
+    -- knight
+    state="idle",
+    timer=0,
+    dir=1,
+    speed=1.2,
+    attack_range=40,
+    land_timer=0,
+
+    -- wizard
+    origin_x=x,
+    origin_y=y,
+    orbit_radius=16,
+    orbit_speed=0.005,
+    orbit_angle=rnd(1),
+    detect_range=40, 
+    chase_speed=0.75,
+    w_state="orbit",
+
+    -- cowboy
+    c_state="idle",       
+    pull_range=40,         
+    pull_strength=0.3,
+    pull_duration=60,
+    pause_duration=60,
+    c_timer=0,
+    struggle_needed=5,
+    pulse_frame=0,
+    range_dot_count=16,
+		range_angle=0,
+		range_rot_speed=0.001
+	}
+
+	add(enemies,enemy)
+	return enemy
+end
+
+function update_enemies()
+
+	for e in all(enemies) do
+
+    if e.dead then
+      update_dead_enemy(e)
+
+    elseif e.type == "knight" then
+			update_knight(e)
+
+		elseif e.type == "wizard" then
+			update_wizard(e)
+
+		elseif e.type == "cowboy" then
+			update_cowboy(e)
+
+		end
+	end
+
+  check_enemy_collision()
+
+end
+
+function update_dead_enemy(e)
+
+	e.dy += gravity
+	e.y += e.dy
+
+	-- when under screen
+	if e.y > 128 then
+		del(enemies,e)
+	end
+
+end
+
+function draw_enemies()
+  for e in all(enemies) do
+    if e.type == "knight" then
+      local e_spr = e.dead and 133 or e.spr
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+    elseif e.type == "wizard" then
+      local e_spr = e.dead and 144 or e.spr
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+    elseif e.type == "cowboy" then
+      local e_spr = e.dead and 160 or e.spr
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+
+      if not e.dead then
+        draw_cowboy_range(e)
+      end
+
+      if player.trapped_by and player.trapped_by.c_state == "pulling" then
+
+        local e = player.trapped_by
+    
+        -- progress bar
+        local bar_w = 16
+        local fill = flr(bar_w * player.struggle_progress / e.struggle_needed)
+        rect(player.x-4, player.y-8, player.x-4+bar_w, player.y-5, 7)
+        rectfill(player.x-4, player.y-8, player.x-4+fill, player.y-5,1)
+    
+        -- next button
+        local next_btn = player.struggle_last_btn == "l" and "r" or "l"
+    
+        -- pulsing, faster with less remaining time
+        local urgency = 1 - (e.c_timer / e.pull_duration)  -- 0 -> 1
+        local pulse_speed = 4 + urgency
+        local pulse = sin(e.pulse_frame/30 * pulse_speed)
+    
+        -- pulsing color
+        local hl_col = pulse > 0 and 1 or 1
+        local dim_col = 5  
+    
+        -- small bounce for next button
+        local bounce = pulse > 0 and -1 or 0
+    
+        if next_btn == "l" then
+            print("⬅️", player.x-6, player.y-16+bounce, hl_col)
+            print("➡️", player.x+4, player.y-16, dim_col)
+        else
+            print("⬅️", player.x-6, player.y-16, dim_col)
+            print("➡️", player.x+4, player.y-16+bounce, hl_col)
+        end
+      end
+    end
+  end
+end
+
+
+function check_enemy_collision()
+  if player.dashing then return end
+
+	for e in all(enemies) do
+		if not e.dead then
+			if player_enemy_overlap(e) then
+
+				local current_char = player.spr_set
+				local can_kill = phase.beats[current_char] == e.type
+
+				if player_enemy_collision(e) and can_kill then
+					enemy_hit(e)
+				else
+					player_dead()
+				end
+
+			end
+		end
+	end
+end
+
+function player_enemy_overlap(e)
+
+	local overlap_x =
+		player.x < e.x + e.w
+		and player.x + player.w > e.x
+
+	local overlap_y =
+		player.y < e.y + e.h
+		and player.y + player.h > e.y
+
+	return overlap_x and overlap_y
+end
+
+function player_enemy_collision(e)
+
+	local overlap_x =
+		player.x < e.x + e.w
+		and player.x + player.w > e.x
+
+	local hit_top =
+		player.y + player.h >= e.y
+		and player.y + player.h <= e.y + e.h / 2
+
+	local falling = player.dy > 0
+
+	return overlap_x and hit_top and falling
+end
+
+function enemy_hit(e)
+  player.dy = -3
+  e.dead = true
+  e.dy = -1
+end
+
+function player_dead()
+  player.dead = true
+  player.dy += gravity
+	player.y += player.dy
+
+end
+
+function cleanup_distant_enemies()
+	local despawn_distance = 300 
+
+	for e in all(enemies) do
+		if not e.dead and abs(e.y - player.y) > despawn_distance then
+			del(enemies, e)
+		end
+	end
+end
+-->8
+function init_game()
+  poke(0x5f2e, 1) -- allows hidden colors
+	poke(0x5f5c, 255) -- button press only activates once
+
+  test = false
+
+	gravity = 0.3
+	friction = 0.85
+
+  player = {	
+		spr_set='viking',
+		spr=p_spr_sets['viking'],
+		flp=false,
+    x = 140,
+    y = 490,
+		w=8,
+		h=8,
+    dy=0,
+		dx=0,
+		max_dx=4,
+		max_dy=6,
+		acc=0.4,
+		boost=4,
+		anim=0,
+		running=false,
+		jumping=false,
+		falling=false,
+		sliding=false,
+		landed=false,
+    dash_used_on_platform=false,
+		dash_act_time=0,
+		dash_ready_l=false,
+		dash_ready_r=false,
+		dashing=false,
+		dash_timer=0,
+		max_dash_dx = 6,
+		dash_speed=6,
+		slam_act_time=0,
+		slam_ready=false,
+		slamming=false,
+		slam_max_dy=14,
+		jump_held=false,
+		double_jump=true,
+		on_wall_left=false,
+		on_wall_right=false,
+		dead=false,
+
+		-- cowboy quick time event
+		struggle_progress=0,
+		struggle_last_btn=nil, 
+		trapped_by=nil,
+		pre_trap_x=0,
+		pre_trap_y=0,
+		release_timer=0,
+		release_duration=10,
+		release_start_x=0,
+		release_start_y=0,
+		shake_timer=0
+  }
+
+	music_patterns = {
+		viking=0,
+		cowboy=4,
+		knight=8,
+		wizard=12
+	}
+
+	wall_sprites = {
+		viking=66,
+		cowboy=68,
+		knight=66,
+		wizard=70
+	}
+
+	bg_sprites = {
+		viking = {71, 72, 87, 88},
+		wizard = {75, 76, 91, 92},
+		knight = {73, 74, 89, 90},
+		cowboy = {73, 74, 89, 90}
+	}
+
+	decoration_sprites = {114, 116, 118}
+
+	music(music_patterns[player.spr_set])
+
+	enemies = {}
+
+	--- test -----
+	--spawn_enemy(24,32,"knight")
+	--spawn_enemy(88, 24, "wizard")
+	--spawn_enemy(24,64,"cowboy")
+
+	-- charater type timer
+	phase = {
+		duration=400,     -- 600 frame = 20mp at 30fps
+		current=400,
+		char_index=1,    
+		dot_count=8, 
+	
+		-- char_index
+		chars = {
+			[1]="viking",
+			[2]="wizard",
+			[3]="knight",
+			[4]="cowboy"
+		},
+
+		-- what class beats another (rock, paper scissors)
+		beats = {
+			viking=nil,
+			knight="cowboy",
+			cowboy="wizard",
+			wizard="knight"
+		},
+		-- depletion queue for timer rectangles
+		-- center always stays
+		cell_order = {
+			{-1,-1},{0,-1},{1,-1},
+			{1,0},{1,1},{0,1},
+			{-1,1},{-1,0}
+		}
+	}
+
+	palettes={
+		base = {
+			[0]=-14,2,3,-7,4,-2,-1,15,-15,
+			1,-3,-13,13,-10,5,-11
+		},
+		new = {[0]=0,8,3,-7,4,9,-1,15,-15,
+		1,-5,-13,13,-10,5,-11
+	}}
+
+	current_palette = palettes.new
+
+	-- cam_x=0
+	cam_x, cam_y = 0, 0
+	map_start = 0
+	map_end = 128 
+
+	map_start=128
+	map_end=256
+
+	camera_min_y = nil
+
+	score=0
+	last_height=1000
+
+	auto_scroll_active = false
+	auto_scroll_speed = 0.1 
+
+	chunk_height = 30     
+	trigger_buffer = 20    
+
+	generate_chunk(64, 0, map_start, map_end, wall_sprites[player.spr_set], 18, 24, 3, 6, 0.4, true)
+	world_generated_up_to = 0
+
+  death_timer = nil
+end
+
+function update_game()
+	if not player.dead then
+		update_phase()
+		move()
+		update_camera()
+		player_animate(player.spr_set)
+		update_enemies()
+
+		cleanup_distant_enemies()
+
+		if last_height-player.y > 50 then
+			last_height = player.y
+			score+=10
+		end
+
+		local player_ty = flr(player.y/8)
+
+		if player_ty < world_generated_up_to + trigger_buffer then
+			local new_top = world_generated_up_to - chunk_height
+			generate_chunk(world_generated_up_to, new_top, map_start, map_end, 65, 18, 24, 3, 6, 0.4)
+			world_generated_up_to = new_top
+		end
+
+		check_offscreen_death()
+	else
+    if death_timer == nil then
+        death_timer = 30
+        player.dy = -3   -- egyszeri felfele lokes (allitsd izles szerint, pl -3 vagy -4)
+    end
+
+    player.dy += gravity      -- ez minden frame-ben fusson, hogy folyamatosan gyorsuljon
+    player.y += player.dy     -- ez is minden frame-ben
+
+    death_timer -= 1
+
+    if death_timer <= 0 then
+        if score > high_score then
+            high_score = score
+            high_score_name = player_name
+            save_scoreboard(player_name, score)
+        end
+
+        game_state = "gameover"
+        death_timer = nil
+    end
+end
+end
+
+function draw_game()
+	cls()
+	change_palette(current_palette)
+	draw_background()
+  draw_world_wrapped(cam_x, cam_y) 
+
+	--shakes player when struggling
+	local shake_x = 0
+	if player.shake_timer and player.shake_timer > 0 then
+			shake_x = (rnd(2)-1)
+			player.shake_timer -= 1
+	end
+	spr(player.spr, player.x+shake_x, player.y, player.w/8, player.h/8, player.flp)
+	draw_enemies()
+
+	draw_phase_bar()
+
+	----- test -----
+	if test then
+		print("⬅️➡️ to move")
+		print("❎ to jump, 🅾️ to dash")
+		print("double jump:" .. tostring(player.double_jump))
+		print("on wall left:" .. tostring(player.on_wall_left))
+		print("on wall right:" .. tostring(player.on_wall_right))
+	end
+
+	print("score: " .. score, cam_x+1, cam_y+9)
+end
+
+function draw_background()
+
+	local tile_size = 16
+	local parallax_factor = 0.2
+
+	local scroll_x = (cam_x * parallax_factor) % tile_size
+	local scroll_y = (cam_y * parallax_factor) % tile_size
+
+	local b = bg_sprites[player.spr_set]
+
+	camera(0,0)
+
+	for y = -tile_size, 128+tile_size, tile_size do
+		for x = -tile_size, 128+tile_size, tile_size do
+			local screen_x = x - scroll_x
+			local screen_y = y - scroll_y
+
+			spr(b[1], screen_x,   screen_y,   1, 1)
+			spr(b[2], screen_x+8, screen_y,   1, 1)
+			spr(b[3], screen_x,   screen_y+8, 1, 1)
+			spr(b[4], screen_x+8, screen_y+8, 1, 1)
+		end
+	end
+
+	camera(cam_x, cam_y)
+end
+
+function check_offscreen_death()
+	local completely_offscreen =
+			player.x + player.w < cam_x or
+			player.x > cam_x + 128 or
+			player.y + player.h < cam_y or
+			player.y > cam_y + 128
+
+	if completely_offscreen then
+			player.dead = true
+	end
+end
+-->8
+function update_gameover()
+  if btnp(❎) then
+		game_state = "menu"
+	end
+end
+
+function draw_gameover()
+  camera(0, 0)
+  cls(0)
+	print("game over", 45, 50, 8)
+	print("score: "..score, 45, 60, 7)
+	print("press ❎ to continue", 25, 80, 6)
+end
+-->8
+function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, min_gap, max_gap, min_len, max_len, split_chance, is_initial_spawn)
+
+	local tx_min_clear = flr(x_min/8)
+	local tx_max_clear = flr(x_max/8)
+
+	for ty = world_ty_bottom, world_ty_top do
+		local map_row = world_to_map_row(ty)
+		for tx = tx_min_clear, tx_max_clear do
+			mset(tx, map_row, 0)   
+		end
+	end
+
+	local tx_min = flr(x_min/8)
+	local tx_max = flr(x_max/8)
+	
+	local max_jump_height_tiles = (player.boost^2 / (2*gravity)) / 8
+	local air_time_frames = (2*player.boost) / gravity
+	local max_jump_dist_tiles = (air_time_frames * player.max_dx) / 8
+
+	local ty = world_ty_top
+	local prev_bottom_y = nil
+	local prev_tx_center = nil
+	local forced_direction = nil
+
+	local shapes = {
+		function(tx, ty, len, h)
+			local cx, cy = len/2, h/2
+			for row=0,h-1 do
+				for col=0,len-1 do
+					local dx = (col-cx)/(len/2)
+					local dy = (row-cy)/(h/2)
+					local dist = dx*dx + dy*dy
+					if dist <= 1 or (dist <= 1.4 and rnd(1) < 0.4) then
+						mset(tx+col, ty+row, wall_spr)
+					end
+				end
+			end
+		end,
+	}
+
+	local generated_platforms = {}
+
+	while ty > world_ty_bottom do
+
+		local gap = min_gap + rnd(max_gap - min_gap)
+		local gap_tiles = flr(gap/8)
+
+		if prev_bottom_y then
+			ty = prev_bottom_y - gap_tiles   
+		else
+			ty -= gap_tiles
+		end
+
+		if ty <= world_ty_bottom then break end
+
+		local len = min_len + flr(rnd(max_len - min_len + 1))
+		local h = 2 + flr(rnd(2))
+
+		local budget_left = max(1, max_jump_dist_tiles * (1 - gap_tiles/max_jump_height_tiles))
+		local max_h_shift = mid(1, flr(budget_left), 8)
+
+		local is_split = rnd(1) < split_chance
+		local len1, len2, gap_between, effective_width
+
+		if is_split then
+			len1 = min_len + flr(rnd(max_len - min_len + 1))
+			len2 = min_len + flr(rnd(max_len - min_len + 1))
+			gap_between = 3 + flr(rnd(3))
+			effective_width = len1 + gap_between + len2
+		else
+			effective_width = len
+		end
+
+		local tx
+		if prev_tx_center then
+			local shift = min_h_shift_val(max_h_shift, forced_direction)
+			local desired_tx = prev_tx_center + shift - flr(effective_width/2)
+			tx = mid(tx_min, desired_tx, tx_max-effective_width)
+
+			if tx ~= desired_tx then
+				forced_direction = (desired_tx > tx) and -1 or 1
+			else
+				forced_direction = nil
+			end
+		else
+			tx = tx_min + flr(rnd(max(1, tx_max - tx_min - effective_width + 1)))
+		end
+
+		local map_row = world_to_map_row(ty)
+		local actual_top_y, actual_center
+
+		if is_split then
+			local h1 = 2 + flr(rnd(2))
+			local h2 = 2 + flr(rnd(2))
+
+			draw_shape_wrapped(tx, ty, len1, h1, wall_spr, wall_spr+1)
+			draw_shape_wrapped(tx+len1+gap_between, ty, len2, h2, wall_spr, wall_spr+1)
+
+			add(generated_platforms, {tx=tx, ty=ty-h1+1, len=len1})
+			add(generated_platforms, {tx=tx+len1+gap_between, ty=ty-h2+1, len=len2})
+
+			actual_top_y = ty - max(h1, h2) + 1
+			actual_center = tx + flr(effective_width/2)
+		else
+			draw_shape_wrapped(tx, ty, len, h, wall_spr, wall_spr+1)
+			actual_top_y = ty - h + 1
+			actual_center = tx + flr(len/2)
+		end
+
+		prev_bottom_y = actual_top_y 
+		prev_tx_center = actual_center
+	end
+
+	if is_initial_spawn then
+		spawn_player(generated_platforms)
+		spawn_enemies_on_platforms(generated_platforms, 3)   
+		spawn_decorations_on_platforms(generated_platforms, 3)
+	else
+		spawn_enemies_on_platforms(generated_platforms, 0)   
+		spawn_decorations_on_platforms(generated_platforms, 0)
+	end
+end
+
+function draw_shape_wrapped(tx, world_ty, len, h, top_spr, fill_spr)
+	local cx, cy = len/2, h/2
+	local mask = {}
+	for row=0,h-1 do
+		mask[row] = {}
+		for col=0,len-1 do
+			local dx = (col-cx)/(len/2)
+			local dy = (row-cy)/(h/2)
+			local dist = dx*dx + dy*dy
+			mask[row][col] = (dist <= 1 or (dist <= 1.4 and rnd(1) < 0.4))
+		end
+	end
+
+	for row=0,h-1 do
+		for col=0,len-1 do
+			if mask[row][col] then
+				local above_filled = (row < h-1) and mask[row+1][col]
+				local spr_to_use = above_filled and fill_spr or top_spr
+				local this_world_ty = world_ty - row
+				mset(tx+col, world_to_map_row(this_world_ty), spr_to_use)
+			end
+		end
+	end
+end
+
+function min_h_shift_val(max_h_shift, forced_direction)
+	local min_shift = 6
+	if max_h_shift < min_shift then max_h_shift = min_shift end
+	local shift = min_shift + flr(rnd(max_h_shift - min_shift + 1))
+
+	if forced_direction then
+		shift = shift * forced_direction
+	elseif rnd(1) < 0.5 then
+		shift = -shift
+	end
+	return shift
+end
+
+enemy_types = {"knight", "wizard", "cowboy"}
+
+function spawn_enemies_on_platforms(platforms, skip_first_n)
+	skip_first_n = skip_first_n or 0
+
+	for i, p in ipairs(platforms) do
+		if i > skip_first_n then   
+
+			local spawn_chance = 0.65
+			if p.len >= 3 and rnd(1) < spawn_chance then
+				local margin = 1
+				local safe_len = max(1, p.len - margin*2)
+				local offset = margin + flr(rnd(safe_len))
+
+				local enemy_tx = p.tx + offset
+				local enemy_x = enemy_tx * 8
+				local enemy_y = p.ty * 8 - 8
+
+				spawn_enemy(enemy_x, enemy_y, enemy_types[1 + flr(rnd(#enemy_types))])
+			end
+		end
+	end
+end
+
+function spawn_player(platforms)
+	if #platforms > 0 then
+		local spawn_platform = platforms[1]
+		local spawn_tx = spawn_platform.tx + flr(spawn_platform.len/2)  
+		player.x = spawn_tx * 8
+		player.y = spawn_platform.ty * 8 - player.h   
+	end
+end
+
+function spawn_decorations_on_platforms(platforms, skip_first_n)
+	skip_first_n = skip_first_n or 0
+
+	for i, p in ipairs(platforms) do
+		if i > skip_first_n then
+
+			local deco_chance = 0.5
+			if p.len >= 2 and rnd(1) < deco_chance then
+
+				local deco_tx = p.tx + flr(rnd(p.len))
+				local deco_ty = p.ty - 1
+
+				local spr_id = decoration_sprites[1 + flr(rnd(#decoration_sprites))]
+
+				mset(deco_tx, world_to_map_row(deco_ty), spr_id)
+			end
+		end
+	end
+end
+-->8
+function update_knight(e)
+
+	e.dy += gravity
+
+	if e.state == "idle" then
+
+		e.dx = 0
+
+		if player_in_knight_range(e) then
+			e.state = "prepare"
+			e.timer = 10
+		end
+
+	elseif e.state == "prepare" then
+
+    e.dx = 0
+
+    if player.x < e.x then
+        e.dir = -1
+    else
+        e.dir = 1
+    end
+
+    e.flp = e.dir == -1
+
+    e.timer -= 1
+
+    if e.timer <= 0 then
+        if can_knight_jump(e) then
+            e.state = "jump"
+            e.dy = -2
+            e.dx = e.dir * e.speed * 1.25
+        else
+            e.state = "cooldown"
+            e.timer = 20
+        end
+    end
+
+	elseif e.state == "jump" then
+
+		move_knight(e)
+
+	elseif e.state == "land" then
+
+    e.dx = 0
+    e.land_timer -= 1
+
+    if e.land_timer <= 0 then
+        e.state = "cooldown"
+        e.timer = 20
+    end
+
+	elseif e.state == "cooldown" then
+
+		e.dx = 0
+
+		e.timer -= 1
+
+		if e.timer <= 0 then
+			e.state = "idle"
+		end
+	end
+
+	animate_knight(e)
+
+end
+
+
+function can_knight_jump(e)
+
+	local check_x
+
+	if e.dir == 1 then
+		check_x = e.x + e.w + 5
+	else
+		check_x = e.x - 5
+	end
+
+	local check_y = e.y + e.h + 4
+
+	local tx = flr(check_x / 8)
+	local ty = flr(check_y / 8)
+
+	return fget(mget(tx,ty),0)
+
+end
+
+function player_in_knight_range(e)
+
+	local dx = player.x - e.x
+
+	if abs(dx) > e.attack_range then
+		return false
+	end
+
+	if abs(player.y - e.y) > 16 then
+		return false
+	end
+
+	return true
+end
+
+
+function move_knight(e)
+  
+  limit_speed(e.dy, e.max_dy)
+  limit_speed(e.dx, e.max_dx)
+
+	-- horizontal collision
+	if e.dx < 0 then
+		local hit, tx = collide(e,"left",0)
+		if hit then
+			e.x = (tx+1)*8
+			e.dx = 0
+		else
+			e.x += e.dx
+		end
+
+	elseif e.dx > 0 then
+		local hit, tx = collide(e,"right",0)
+		if hit then
+			e.x = tx*8 - e.w
+			e.dx = 0
+		else
+			e.x += e.dx
+		end
+	end
+
+
+	-- vertical collision
+	if e.dy < 0 then
+		local hit, tx, ty = collide(e,"up",0)
+		if hit then
+			e.y = (ty+1)*8
+			e.dy = 0
+		else
+			e.y += e.dy
+		end
+
+	elseif e.dy > 0 then
+		local hit, tx, ty = collide(e,"down",0)
+
+    if hit then
+        e.y = ty*8 - e.h
+        e.dy = 0
+
+        if e.state == "jump" then
+            e.state = "land"
+            e.land_timer = 6 
+        end
+    else
+        e.y += e.dy
+    end
+	end
+
+end
+
+function animate_knight(e)
+
+	local knight_spr_base=128
+
+	if e.state == "idle" then
+
+		if time()-e.anim > 0.3 then
+			e.anim = time()
+			e.spr = (e.spr == knight_spr_base) and knight_spr_base+1 or knight_spr_base
+		end
+
+	elseif e.state == "land" then
+		e.spr = knight_spr_base+4
+
+	elseif e.state == "prepare" then
+		e.spr = knight_spr_base+2
+
+	elseif e.state == "jump"
+	or e.state == "cooldown" then
+		e.spr = knight_spr_base+3
+
+	end
+
+end
+-->8
+function _init()
+	cartdata("rock_paper_wizards_v1")
+
+	game_state = "menu"
+	load_scoreboard()
+
+	if high_score_name == "---" then
+		init_name_entry()
+		game_state = "enter_name"
+	else
+		player_name = high_score_name
+		init_menu()
+		game_state = "menu"
+	end
+end
+
+function _update()
+	if game_state == "menu" then
+		update_menu()
+	elseif game_state == "playing" then
+		update_game()
+	elseif game_state == "howto" then
+		update_howto()
+	elseif game_state == "gameover" then
+		update_gameover()
+	elseif game_state == "enter_name" then
+		update_name_entry()
+	elseif game_state == "scoreboard" then
+		update_scoreboard()
+	end
+end
+
+function _draw()
+	if game_state == "menu" then
+		draw_menu()
+	elseif game_state == "playing" then
+		draw_game()
+	elseif game_state == "howto" then
+		draw_howto()
+	elseif game_state == "gameover" then
+		draw_gameover()
+	elseif game_state == "enter_name" then
+		draw_name_entry()
+	elseif game_state == "scoreboard" then
+		draw_scoreboard()
+	end
+end
+-->8
+function init_menu()
+  menu_selected = 1
+  menu_options = {"start", "how to play", "high score", "change name"}
+end
+
+function update_menu()
+	if btnp(⬆️) then
+		menu_selected -= 1
+		if menu_selected < 1 then menu_selected = #menu_options end
+	end
+	if btnp(⬇️) then
+		menu_selected += 1
+		if menu_selected > #menu_options then menu_selected = 1 end
+	end
+
+	if btnp(❎) then
+		local choice = menu_options[menu_selected]
+		if choice == "start" then
+			init_game()
+			game_state = "playing"
+		elseif choice == "how to play" then
+			game_state = "howto"
+		elseif choice == "high score" then
+			game_state = "scoreboard"
+		elseif choice == "change name" then
+			init_name_entry()
+			game_state = "enter_name"
+		end
+	end
+end
+
+function draw_menu()
+  camera(0, 0)
+	pal()     
+  cls(1)
+
+  print("rock paper wizards", 40, 30, 7)
+
+  for i, opt in ipairs(menu_options) do
+    local y = 60 + (i-1)*10
+    local col = (i == menu_selected) and 10 or 6
+    local prefix = (i == menu_selected) and "> " or "  "
+    print(prefix..opt, 40, y, col)
+  end
+end
+
+function update_howto()
+	if btnp(❎) then
+		game_state = "menu"
+	end
+end
+
+function draw_howto()
+  camera(0,0)   
+	pal()         
+  cls(0)
+
+  local y = 4
+  local lh = 6  
+
+  print("rock-paper-wizards", 4, y, 10) y+=lh+2
+  print("the ultimate climbing game", 4, y, 6) y+=lh+2
+
+  print("controls:", 4, y, 9) y+=lh
+  print("arrows: move", 4, y, 7) y+=lh
+  print("2x tap l/r: dash", 4, y, 7) y+=lh
+  print("2x tap down: slam", 4, y, 7) y+=lh
+  print("wall-jump near walls", 4, y, 7) y+=lh+3
+
+  print("type cycle:", 4, y, 9) y+=lh
+  print("knight beats cowboy", 4, y, 7) y+=lh
+  print("cowboy beats wizard", 4, y, 7) y+=lh
+  print("wizard beats knight", 4, y, 7) y+=lh+3
+
+  print("your type switches", 4, y, 6) y+=lh
+  print("when the music switches", 4, y, 6) y+=lh
+  print("match it to survive enemies", 4, y, 6) y+=lh+3
+
+  print("❎: back to menu", 4, y, 5)
+end
+-->8
+function init_name_entry()
+	name_chars = "abcdefghijklmnopqrstuvwxyz"
+	name_input = {1,1,1}   
+	name_cursor = 1
+end
+
+function update_name_entry()
+	if btnp(⬅️) then
+		name_cursor = max(1, name_cursor - 1)
+	end
+	if btnp(➡️) then
+		name_cursor = min(3, name_cursor + 1)
+	end
+	if btnp(⬆️) then
+		name_input[name_cursor] -= 1
+		if name_input[name_cursor] < 1 then name_input[name_cursor] = #name_chars end
+	end
+	if btnp(⬇️) then
+		name_input[name_cursor] += 1
+		if name_input[name_cursor] > #name_chars then name_input[name_cursor] = 1 end
+	end
+
+	if btnp(❎) then
+		local final_name = ""
+		for i=1,3 do
+			final_name = final_name .. sub(name_chars, name_input[i], name_input[i])
+		end
+		player_name = final_name
+		init_menu()
+		game_state = "menu"
+	end
+
+	if btnp(🅾️) then   
+		init_menu()
+		game_state = "menu"
+	end
+end
+
+function draw_name_entry()
+	camera(0,0)
+	pal()
+	cls(0)
+	print("enter your name", 30, 30, 7)
+
+	for i=1,3 do
+		local ch = sub(name_chars, name_input[i], name_input[i])
+		local col = (i == name_cursor) and 10 or 7
+		print(ch, 55 + (i-1)*10, 60, col)
+	end
+
+	print("arrows: select/change", 8, 90, 6)
+	print("❎: confirm   🅾️: cancel", 8, 100, 6)
+end
+-->8
+p_spr_sets={
+	-- each sprite set has a starter number
+	-- sets are 12 long, values are the starter numbers for the key's character
+	viking=1,
+	wizard=13,
+	knight=25,
+	cowboy=37
+}
+
+function player_animate(char)
+
+	local spr_s = p_spr_sets[char]
+
+	if player.dashing then
+		player.spr=spr_s+9
+	elseif player.slamming then
+		player.spr=spr_s+11
+	elseif player.jumping and player.running then
+		player.spr=spr_s+7
+	elseif player.on_wall_left or player.on_wall_right then
+		player.spr=spr_s+10
+	elseif player.falling and player.running then
+		player.spr=spr_s+8
+	elseif player.jumping then
+		player.spr=spr_s+5
+	elseif player.falling then
+		player.spr=spr_s+6
+	elseif player.sliding then
+		player.spr=spr_s+4
+	elseif player.running then
+		if time()-player.anim>0.1 then
+			player.anim=time()
+			player.spr+=1
+			if player.spr>spr_s+3 then
+				player.spr=spr_s+2
+			end
+		end
+	else --player idle
+		if time()-player.anim>0.3 then
+			player.anim=time()
+			player.spr+=1
+			if player.spr>spr_s+1 then
+				player.spr=spr_s
+			end
+		end
+	end
+end
+-->8
+function move()
+	if player.trapped_by then
+		-- cant move while trapped
+		player.dx = 0
+		player.dy = 0
+		return
+	end
+
+	player.dy += gravity
+	player.dx *= friction
+
+	-- if currently dashing, limits another dash for dash_timer frames
+	if player.dash_timer > 0 then
+		player.dash_timer -= 1
+	end
+
+	-- sets running left state
+	if btn(⬅️) then
+		player.dx -= player.acc
+		player.running = true
+		player.flp = true
+	end
+
+	-- sets running right state
+	if btn(➡️) then
+		player.dx += player.acc
+		player.running = true
+		player.flp = false
+	end
+
+	dash()
+
+	-- sets sliding state
+	if player.running
+	and not btn(⬅️)
+	and not btn(➡️)
+	and not player.falling
+	and not player.jumping then
+		player.running=false
+    player.sliding=true
+	end
+
+	-- jumping
+	if btnp(⬆️)
+	and player.landed then
+		player.dy -= player.boost
+		player.landed = false 
+
+	-- double jump
+	elseif btnp(⬆️)
+	and player.double_jump
+	and not (player.on_wall_left or player.on_wall_right) then
+		-- making sure to not take double jump when on wall
+		player.dy = 0
+		player.dy -= player.boost
+		player.double_jump = false
+	end
+
+	slam()
+
+	-- gravity (falling)
+	if player.dy > 0 then
+		player.falling = true
+		--player.landed = false
+		player.jumping = false
+
+		if not player.slamming then
+			player.dy = limit_speed(player.dy, player.max_dy)
+		else 
+			player.dy = limit_speed(player.dy, player.slam_max_dy) 
+		end
+
+		local hit, tile_x, tile_y = collide(player, "down", 0)
+
+		if hit then
+			player.dy = 0
+
+			if not player.landed then  
+        player.dash_used_on_platform = false
+			end
+
+			player.landed = true
+			player.double_jump = true 
+			player.falling = false
+			player.slamming=false
+			player.y = (tile_y)*8 - player.h
+		else
+        player.landed = false   -- <<< ide kerれうl, csak akkor, ha tれ웃nyleg nincs talれくlat (levegわ➡️ben vagy)
+    end
+
+	--gravity (jumping)
+	elseif player.dy < 0 then
+		player.jumping = true
+
+		local hit, tile_x, tile_y = collide(player, "up", 0)
+
+		if hit then
+			player.dy = 0
+			player.y = (tile_y+1)*8
+		end
+		-- jump smaller if not held on full duration
+		if player.jump_held and not btn(⬆️) then
+			player.dy /= 2
+		end
+	end
+
+	
+	player.dashing = player.dash_timer > 0 -- szerintem majd ide kell tenni a coin-t hogy van-e coin and ...
+
+	-- moving left
+	if player.dx < 0 then 
+		if not player.dashing then
+			player.dx = limit_speed(player.dx, player.max_dx)
+		else
+			player.dx = limit_speed(player.dx, player.max_dash_dx)
+		end
+
+		local hit, tile_x = collide(player, "left", 0)
+
+		if hit then
+			player.dx = 0
+			player.x = (tile_x+1)*8
+		end
+	elseif player.dx > 0 then
+
+		-- max speed changes on dash value
+		if not player.dashing then
+			player.dx = limit_speed(player.dx, player.max_dx)
+		else
+			player.dx = limit_speed(player.dx, player.max_dash_dx)
+		end
+
+		local hit, tile_x = collide(player, "right", 0)
+
+		if hit then
+			player.dx = 0
+			player.x = tile_x*8 - player.w
+		end
+	end
+
+	-- setting state for wall collision
+	if player.dx == 0
+	and btn(⬅️)
+	and player.falling then
+		player.on_wall_left = true
+	elseif player.dx == 0
+	and btn(➡️)
+	and player.falling then
+		player.on_wall_right = true
+	else
+		player.on_wall_left = false
+		player.on_wall_right = false
+	end
+
+	-- hitting left wall
+	if player.on_wall_left then
+		player.dy /= 2
+
+		if btnp(⬆️) then
+			player.dy = 0
+			player.dy -= player.boost/2
+			player.dx += player.boost/2
+		end
+
+	-- hitting right wall
+	elseif player.on_wall_right then
+		player.dy /= 2
+
+		if btnp(⬆️) then
+			player.dy = 0
+			player.dy -= player.boost/2
+			player.dx -= player.boost/2
+		end
+	end
+
+	-- calculating sliding
+	if player.sliding then
+		if abs(player.dx) < 0.2 then
+			player.dx = 0
+			player.sliding = false
+		end
+	end
+
+	player.jump_held = btn(⬆️)
+
+	player.x += player.dx
+	player.y += player.dy
+
+	local min_x = map_start
+	local max_x = map_end - player.w
+
+	if player.x < min_x or player.x > max_x then
+		player.x = mid(min_x, player.x, max_x)
+		player.dx = 0
+	end
+
+end
+
+
+function limit_speed(num, maximum)
+	return mid(-maximum, num, maximum)
+end
+
+function dash() 
+
+	-- if dash is ready and right or left button is pressed then dash
+	if btnp(➡️)
+	and player.dash_ready_r
+	and not player.dash_ready_l
+	and time()-player.dash_act_time<0.25
+	and not player.dash_used_on_platform then
+		player.dx += player.dash_speed
+		player.dash_timer = 6
+		player.dash_used_on_platform = true
+	elseif btnp(⬅️)
+	and player.dash_ready_l
+	and not player.dash_ready_r
+	and time()-player.dash_act_time<0.25 
+	and not player.dash_used_on_platform then
+		player.dx -= player.dash_speed
+		player.dash_timer = 6
+		player.dash_used_on_platform = true
+
+	-- if right or left button is pressed, sets dash_ready to true
+	elseif btnp(➡️) then
+		player.dash_ready_l = false
+		player.dash_ready_r = true
+		player.dash_act_time = time()
+	elseif btnp(⬅️) then
+		player.dash_ready_r = false
+		player.dash_ready_l = true
+		player.dash_act_time = time()
+	end
+end
+
+-- if slam double jump off
+function slam()
+
+	if player.slam_ready
+
+	and btnp(⬇️)
+	and time()-player.slam_act_time<0.25 then
+		player.double_jump = false
+		player.dy += 14
+		player.slamming = true
+	elseif btnp(⬇️) then
+		player.slam_ready = true
+		player.slam_act_time = time()
+	end
+end
+-->8
+function load_scoreboard()
+	high_score = dget(0)   
+
+	high_score_name = ""
+	for i=1,8 do
+		local code = dget(i)  
+		if code > 0 then
+			high_score_name = high_score_name .. chr(code)
+		end
+	end
+
+	if high_score_name == "" then
+		high_score_name = "---"
+	end
+end
+
+function save_scoreboard(name, sc)
+	dset(0, sc)
+	for i=1,8 do
+		local ch = sub(name, i, i)
+		if ch ~= "" then
+			dset(i, ord(ch))
+		else
+			dset(i, 0)
+		end
+	end
+end
+
+function update_scoreboard()
+	if btnp(❎) then
+		game_state = "menu"
+	end
+end
+
+function draw_scoreboard()
+	camera(0,0)
+	pal()
+	cls(0)
+	print("high score", 40, 40, 10)
+	print(high_score_name .. ": " .. high_score, 30, 55, 7) 
+  
+  print("playing as:", 25, 70, 6)
+	print(player_name, 25, 80, 9)
+  
+	print("❎: back", 45, 100, 6)
+end
+
+function ensure_spawn_platform(px, py, wall_spr_top, wall_spr_fill)
+	local spawn_tx = flr(px/8)
+	local spawn_ty = flr(py/8)
+
+	local safety_counter = 0
+	while fget(mget(spawn_tx, world_to_map_row(spawn_ty)), 0) and safety_counter < 20 do
+		spawn_ty -= 1
+		player.y -= 8
+		safety_counter += 1
+	end
+
+	local ground_ty = spawn_ty + 1
+	for dx=-2,2 do
+		mset(spawn_tx+dx, world_to_map_row(ground_ty), wall_spr_top)
+	end
+end
+
+function update_phase()
+	phase.current -= 1
+
+	if phase.current <= 0 then
+		local new_index
+		repeat
+			new_index = flr(rnd(4)) + 1
+		until new_index != phase.char_index
+
+		local old_char = player.spr_set
+
+		phase.char_index = new_index
+		phase.current = phase.duration
+
+		player.spr_set = phase.chars[phase.char_index]
+		player.spr = p_spr_sets[player.spr_set]
+		player.anim = time()
+
+		music(music_patterns[player.spr_set])
+
+		retile_floor(wall_sprites[old_char], wall_sprites[player.spr_set])
+	end
+end
+
+function retile_floor(old_spr, new_spr)
+
+	local tx_min_clear = flr(map_start/8)
+	local tx_max_clear = flr(map_end/8)
+
+	for ty = world_generated_up_to, 64 do
+		local map_row = world_to_map_row(ty)
+		for tx = tx_min_clear, tx_max_clear do
+			local s = mget(tx, map_row)
+			if s == old_spr then
+				mset(tx, map_row, new_spr)
+			elseif s == old_spr-1 then
+				mset(tx, map_row, new_spr-1)
+			end
+		end
+	end
+
+end
+
+function draw_phase_bar()
+
+	local dot_size=5
+	local gap=3
+	local origin_x=cam_x + (phase.dot_count*8/2)
+	local origin_y=cam_y + 2
+
+	local col
+	if phase.char_index==1 then col=1
+	elseif phase.char_index==2 then col=1
+	elseif phase.char_index==3 then col=1
+	else col=1 end
+
+	local progress = 1 - (phase.current / phase.duration)
+	local exact_pos = progress * phase.dot_count
+
+	for i=0,phase.dot_count-1 do
+		local visual_i = phase.dot_count-1-i
+		local dx = origin_x + visual_i*(dot_size+gap)
+		local dy = origin_y
+		local cx = dx + flr(dot_size/2)
+		local cy = dy + flr(dot_size/2)
+		local arm = flr(dot_size/2)
+
+		if i < flr(exact_pos) then
+			pset(cx, cy, col)
+
+		elseif i == flr(exact_pos) then
+			local local_t = exact_pos - i
+
+			if local_t < 0.33 then
+				rectfill(dx, dy, dx+dot_size-1, dy+dot_size-1, col)
+			elseif local_t < 0.66 then
+				draw_cross(cx, cy, max(1, flr(arm/2)), col)
+			else
+				pset(cx, cy, col)
+			end
+
+		else
+			rectfill(dx, dy, dx+dot_size-1, dy+dot_size-1, col)
+		end
+	end
+
+end
+
+function draw_cross(cx, cy, arm, col)
+	line(cx-arm, cy, cx+arm, cy, col)
+	line(cx, cy-arm, cx, cy+arm, col)
+end
+
+function update_wizard(e)
+
+	local dx = player.x - e.x
+	local dy = player.y - e.y
+	local dist = sqrt(dx*dx + dy*dy)
+
+	if e.w_state == "orbit" then
+
+		e.orbit_angle += e.orbit_speed
+		if e.orbit_angle >= 1 then
+			e.orbit_angle -= 1
+		end
+
+		e.x = e.origin_x + cos(e.orbit_angle) * e.orbit_radius
+		e.y = e.origin_y + sin(e.orbit_angle) * e.orbit_radius
+
+		if dist < e.detect_range then
+			e.w_state = "follow"
+		end
+
+	elseif e.w_state == "follow" then
+
+		if dist > 0 then
+			e.x += (dx/dist) * e.chase_speed
+			e.y += (dy/dist) * e.chase_speed
+		end
+
+		if dist > e.detect_range then
+			e.w_state = "return"
+		end
+
+	elseif e.w_state == "return" then
+		local ox = e.x - e.origin_x
+		local oy = e.y - e.origin_y
+		local angle_to_e = atan2(ox, oy)
+
+		local target_x = e.origin_x + cos(angle_to_e) * e.orbit_radius
+		local target_y = e.origin_y + sin(angle_to_e) * e.orbit_radius
+
+		local rdx = target_x - e.x
+		local rdy = target_y - e.y
+		local rdist = sqrt(rdx*rdx + rdy*rdy)
+
+		if rdist < 1 then
+			e.orbit_angle = angle_to_e
+			e.w_state = "orbit"
+		else
+			e.x += (rdx/rdist) * e.chase_speed
+			e.y += (rdy/rdist) * e.chase_speed
+		end
+
+		if dist < e.detect_range then
+			e.w_state = "follow"
+		end
+
+	end
+
+	e.flp = player.x < e.x
+
+	animate_wizard(e)
+
+end
+
+function animate_wizard(e)
+
+	local wizard_spr_base=144
+
+	if time()-e.anim > 0.3 then
+		e.anim = time()
+		e.spr = (e.spr == wizard_spr_base) and wizard_spr_base+1 or wizard_spr_base
+	end
+
+end
 __gfx__
 00000000700000070708807000000007000000700000000000088000070880700089987730000007000000007088807006844860004334000004400000444000
 00000000778998770789987000899877008998707000000770899807078998700899998700899877707788777799987009433490043333400043340004333400

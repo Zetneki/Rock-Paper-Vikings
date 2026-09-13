@@ -58,6 +58,31 @@ function init_game()
 		shake_timer=0
   }
 
+	music_patterns = {
+		viking=0,
+		cowboy=4,
+		knight=8,
+		wizard=12
+	}
+
+	wall_sprites = {
+		viking=66,
+		cowboy=68,
+		knight=66,
+		wizard=70
+	}
+
+	bg_sprites = {
+		viking = {71, 72, 87, 88},
+		wizard = {75, 76, 91, 92},
+		knight = {73, 74, 89, 90},
+		cowboy = {73, 74, 89, 90}
+	}
+
+	decoration_sprites = {114, 116, 118}
+
+	music(music_patterns[player.spr_set])
+
 	enemies = {}
 
 	--- TEST -----
@@ -126,7 +151,7 @@ function init_game()
 	chunk_height = 30     
 	trigger_buffer = 20    
 
-	generate_chunk(64, 0, map_start, map_end, 65, 18, 24, 3, 6, 0.4, true)
+	generate_chunk(64, 0, map_start, map_end, wall_sprites[player.spr_set], 18, 24, 3, 6, 0.4, true)
 	world_generated_up_to = 0
 
   death_timer = nil
@@ -157,29 +182,34 @@ function update_game()
 
 		check_offscreen_death()
 	else
-		if death_timer == nil then
-			death_timer = 30
-		end
+    if death_timer == nil then
+        death_timer = 30
+        player.dy = -3   -- egyszeri felfele lokes (allitsd izles szerint, pl -3 vagy -4)
+    end
 
-		death_timer -= 1
+    player.dy += gravity      -- ez MINDEN frame-ben fusson, hogy folyamatosan gyorsuljon
+    player.y += player.dy     -- ez is minden frame-ben
 
-		if death_timer <= 0 then
-			if score > high_score then
-				high_score = score
-				high_score_name = player_name
-				save_scoreboard(player_name, score)
-			end
+    death_timer -= 1
 
-			game_state = "gameover"
-			death_timer = nil
-		end
-	end
+    if death_timer <= 0 then
+        if score > high_score then
+            high_score = score
+            high_score_name = player_name
+            save_scoreboard(player_name, score)
+        end
+
+        game_state = "gameover"
+        death_timer = nil
+    end
+end
 end
 
 function draw_game()
-  cls()
-  draw_world_wrapped(cam_x, cam_y) 
+	cls()
 	change_palette(current_palette)
+	draw_background()
+  draw_world_wrapped(cam_x, cam_y) 
 
 	--shakes player when struggling
 	local shake_x = 0
@@ -204,14 +234,41 @@ function draw_game()
 	print("score: " .. score, cam_x+1, cam_y+9)
 end
 
+function draw_background()
+
+	local tile_size = 16
+	local parallax_factor = 0.2
+
+	local scroll_x = (cam_x * parallax_factor) % tile_size
+	local scroll_y = (cam_y * parallax_factor) % tile_size
+
+	local b = bg_sprites[player.spr_set]
+
+	camera(0,0)
+
+	for y = -tile_size, 128+tile_size, tile_size do
+		for x = -tile_size, 128+tile_size, tile_size do
+			local screen_x = x - scroll_x
+			local screen_y = y - scroll_y
+
+			spr(b[1], screen_x,   screen_y,   1, 1)
+			spr(b[2], screen_x+8, screen_y,   1, 1)
+			spr(b[3], screen_x,   screen_y+8, 1, 1)
+			spr(b[4], screen_x+8, screen_y+8, 1, 1)
+		end
+	end
+
+	camera(cam_x, cam_y)
+end
+
 function check_offscreen_death()
 	local completely_offscreen =
-		player.x + player.w < cam_x or
-		player.x > cam_x + 128 or
-		player.y + player.h < cam_y or
-		player.y > cam_y + 128
+			player.x + player.w < cam_x or
+			player.x > cam_x + 128 or
+			player.y + player.h < cam_y or
+			player.y > cam_y + 128
 
 	if completely_offscreen then
-		player.dead = true
+			player.dead = true
 	end
 end
