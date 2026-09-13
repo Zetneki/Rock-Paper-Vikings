@@ -15,7 +15,8 @@ function collide(obj, aim, flag)
 		-- check exta tiles for collision
 		for tx = tx_near, tx_far, -1 do
 			for ty = ty1, ty2 do
-				if (fget(mget(tx,ty),flag)) return true, tx, ty 
+				local map_row = world_to_map_row(ty)
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end 
 			end
 		end
 
@@ -26,7 +27,8 @@ function collide(obj, aim, flag)
 		-- check exta tiles for collision
 		for tx = tx_near, tx_far do
 			for ty = ty1, ty2 do
-				if (fget(mget(tx,ty), flag)) return true, tx, ty 
+				local map_row = world_to_map_row(ty)
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end 
 			end
 		end
 		
@@ -36,8 +38,9 @@ function collide(obj, aim, flag)
 
 		-- check exta tiles for collision
 		for ty = ty_near, ty_far, -1 do
+			local map_row = world_to_map_row(ty)
 			for tx = tx1, tx2 do
-				if (fget(mget(tx,ty), flag)) return true, tx, ty
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end
 			end
 		end
 		
@@ -47,9 +50,16 @@ function collide(obj, aim, flag)
 
 		-- check exta tiles for collision
 		for ty = ty_near, ty_far do
+			local map_row = world_to_map_row(ty)
 			for tx = tx1, tx2 do
-				if (fget(mget(tx,ty), flag)) return true, tx, ty 
+				if fget(mget(tx, map_row), flag) then return true, tx, ty end
 			end
 		end
 	end
+end
+
+function world_to_map_row(world_ty)
+	local r = world_ty % 64
+	if r < 0 then r += 64 end
+	return r
 end

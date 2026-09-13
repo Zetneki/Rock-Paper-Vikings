@@ -172,6 +172,14 @@ function move()
 	player.x += player.dx
 	player.y += player.dy
 
+	local min_x = map_start
+	local max_x = map_end - player.w
+
+	if player.x < min_x or player.x > max_x then
+		player.x = mid(min_x, player.x, max_x)
+		player.dx = 0
+	end
+
 end
 
 
