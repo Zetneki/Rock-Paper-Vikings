@@ -1,6 +1,6 @@
 function init_menu()
   menu_selected = 1
-  menu_options = {"start", "how to play", "high score", "change name", "quit"}
+  menu_options = {"start", "how to play", "high score", "change name"}
 end
 
 function update_menu()

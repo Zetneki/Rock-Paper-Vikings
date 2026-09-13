@@ -134,6 +134,8 @@ end
 
 
 function check_enemy_collision()
+  if player.dashing then return end
+
 	for e in all(enemies) do
 		if not e.dead then
 			if player_enemy_overlap(e) then

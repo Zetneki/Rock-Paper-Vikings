@@ -27,6 +27,7 @@ function init_game()
 		falling=false,
 		sliding=false,
 		landed=false,
+    dash_used_on_platform=false,
 		dash_act_time=0,
 		dash_ready_l=false,
 		dash_ready_r=false,
