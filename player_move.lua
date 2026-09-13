@@ -1,4 +1,11 @@
 function move()
+	if player.trapped_by then
+		-- cant move while trapped
+		player.dx = 0
+		player.dy = 0
+		return
+	end
+
 	player.dy += gravity
 	player.dx *= friction
 
