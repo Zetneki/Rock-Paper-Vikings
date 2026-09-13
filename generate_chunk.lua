@@ -114,8 +114,10 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 	if is_initial_spawn then
 		spawn_player(generated_platforms)
 		spawn_enemies_on_platforms(generated_platforms, 3)   
+		spawn_decorations_on_platforms(generated_platforms, 3)
 	else
 		spawn_enemies_on_platforms(generated_platforms, 0)   
+		spawn_decorations_on_platforms(generated_platforms, 0)
 	end
 end
 
@@ -187,5 +189,25 @@ function spawn_player(platforms)
 		local spawn_tx = spawn_platform.tx + flr(spawn_platform.len/2)  
 		player.x = spawn_tx * 8
 		player.y = spawn_platform.ty * 8 - player.h   
+	end
+end
+
+function spawn_decorations_on_platforms(platforms, skip_first_n)
+	skip_first_n = skip_first_n or 0
+
+	for i, p in ipairs(platforms) do
+		if i > skip_first_n then
+
+			local deco_chance = 0.5
+			if p.len >= 2 and rnd(1) < deco_chance then
+
+				local deco_tx = p.tx + flr(rnd(p.len))
+				local deco_ty = p.ty - 1
+
+				local spr_id = decoration_sprites[1 + flr(rnd(#decoration_sprites))]
+
+				mset(deco_tx, world_to_map_row(deco_ty), spr_id)
+			end
+		end
 	end
 end

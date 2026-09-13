@@ -101,6 +101,41 @@ function update_cowboy(e)
 
 	e.flp = player.x < e.x
 
+	e.range_angle -= e.range_rot_speed
+	if e.range_angle < 0 then
+		e.range_angle += 1
+	end
+
+	animate_cowboy(e)
+
+end
+
+function draw_cowboy_range(e)
+
+	if e.c_state == "pulling" then return end
+
+	local center_x = e.x + e.w/2
+	local center_y = e.y + e.h/2
+
+	for i=0,e.range_dot_count-1 do
+		local angle = e.range_angle + i/e.range_dot_count
+		local dot_x = center_x + cos(angle) * e.pull_range
+		local dot_y = center_y + sin(angle) * e.pull_range
+
+		pset(dot_x, dot_y, 1)
+	end
+
+end
+
+function animate_cowboy(e)
+
+	local cowboy_spr_base=160
+
+	if time()-e.anim > 0.3 then
+		e.anim = time()
+		e.spr = (e.spr == cowboy_spr_base) and cowboy_spr_base+1 or cowboy_spr_base
+	end
+
 end
 
 function lerp(a, b, t)

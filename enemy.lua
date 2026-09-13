@@ -19,6 +19,7 @@ function spawn_enemy(x,y,type)
     dir=1,
     speed=1.2,
     attack_range=40,
+    land_timer=0,
 
     -- wizard
     origin_x=x,
@@ -38,7 +39,10 @@ function spawn_enemy(x,y,type)
     pause_duration=60,
     c_timer=0,
     struggle_needed=5,
-    pulse_frame=0
+    pulse_frame=0,
+    range_dot_count=16,
+		range_angle=0,
+		range_rot_speed=0.001
 	}
 
 	add(enemies,enemy)
@@ -83,17 +87,18 @@ end
 function draw_enemies()
   for e in all(enemies) do
     if e.type == "knight" then
-      local e_spr = 128
-      if (e.dead) e_spr = 129
+      local e_spr = e.dead and 133 or e.spr
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
     elseif e.type == "wizard" then
-      local e_spr = 144
-      if (e.dead) e_spr = 145
+      local e_spr = e.dead and 144 or e.spr
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
     elseif e.type == "cowboy" then
-      local e_spr = 160
-      if (e.dead) e_spr = 161
+      local e_spr = e.dead and 160 or e.spr
       spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+
+      if not e.dead then
+        draw_cowboy_range(e)
+      end
 
       if player.trapped_by and player.trapped_by.c_state == "pulling" then
 
@@ -103,7 +108,7 @@ function draw_enemies()
         local bar_w = 16
         local fill = flr(bar_w * player.struggle_progress / e.struggle_needed)
         rect(player.x-4, player.y-8, player.x-4+bar_w, player.y-5, 7)
-        rectfill(player.x-4, player.y-8, player.x-4+fill, player.y-5, 3)
+        rectfill(player.x-4, player.y-8, player.x-4+fill, player.y-5,1)
     
         -- next button
         local next_btn = player.struggle_last_btn == "l" and "r" or "l"
@@ -114,7 +119,7 @@ function draw_enemies()
         local pulse = sin(e.pulse_frame/30 * pulse_speed)
     
         -- pulsing color
-        local hl_col = pulse > 0 and 10 or 7
+        local hl_col = pulse > 0 and 1 or 1
         local dim_col = 5  
     
         -- small bounce for next button

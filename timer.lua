@@ -7,13 +7,38 @@ function update_phase()
 			new_index = flr(rnd(4)) + 1
 		until new_index != phase.char_index
 
+		local old_char = player.spr_set
+
 		phase.char_index = new_index
 		phase.current = phase.duration
 
 		player.spr_set = phase.chars[phase.char_index]
 		player.spr = p_spr_sets[player.spr_set]
 		player.anim = time()
+
+		music(music_patterns[player.spr_set])
+
+		retile_floor(wall_sprites[old_char], wall_sprites[player.spr_set])
 	end
+end
+
+function retile_floor(old_spr, new_spr)
+
+	local tx_min_clear = flr(map_start/8)
+	local tx_max_clear = flr(map_end/8)
+
+	for ty = world_generated_up_to, 64 do
+		local map_row = world_to_map_row(ty)
+		for tx = tx_min_clear, tx_max_clear do
+			local s = mget(tx, map_row)
+			if s == old_spr then
+				mset(tx, map_row, new_spr)
+			elseif s == old_spr-1 then
+				mset(tx, map_row, new_spr-1)
+			end
+		end
+	end
+
 end
 
 function draw_phase_bar()
@@ -24,10 +49,10 @@ function draw_phase_bar()
 	local origin_y=cam_y + 2
 
 	local col
-	if phase.char_index==1 then col=8
-	elseif phase.char_index==2 then col=12
-	elseif phase.char_index==3 then col=11
-	else col=9 end
+	if phase.char_index==1 then col=1
+	elseif phase.char_index==2 then col=1
+	elseif phase.char_index==3 then col=1
+	else col=1 end
 
 	local progress = 1 - (phase.current / phase.duration)
 	local exact_pos = progress * phase.dot_count

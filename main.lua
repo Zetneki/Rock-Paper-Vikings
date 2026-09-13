@@ -54,8 +54,35 @@ function _init()
 		release_duration=10,
 		release_start_x=0,
 		release_start_y=0,
-		shake_timer=0
+		shake_timer=0,
+
   }
+
+	music_patterns = {
+		viking=0,
+		cowboy=4,
+		knight=8,
+		wizard=12
+	}
+
+	wall_sprites = {
+		viking=66,
+		cowboy=68,
+		knight=66,
+		wizard=70
+	}
+
+	bg_sprites = {
+		viking = {71, 72, 87, 88},
+		wizard = {75, 76, 91, 92},
+		knight = {73, 74, 89, 90},
+		cowboy = {73, 74, 89, 90}
+	}
+
+	decoration_sprites = {114, 116, 118}
+
+	music(music_patterns[player.spr_set])
+
 
 	enemies = {}
 
@@ -66,8 +93,8 @@ function _init()
 
 	-- charater type timer
 	phase = {
-		duration=400,     -- 600 frame = 20mp at 30fps
-		current=400,
+		duration=450,     -- 600 frame = 20mp at 30fps
+		current=450,
 		char_index=1,    
 		dot_count=8, 
 	
@@ -97,8 +124,7 @@ function _init()
 
 	palettes={
 		base = {
-		[0]=-14,2,3,-7,4,-2,-1,15,-15,
-		1,-3,-13,13,-10,5,-11
+		[0]=0,8,3,-7,4,9,-1,15,-15,1,-5,-13,13,-10,5,-11
 	}}
 
 	current_palette = palettes.base
@@ -122,7 +148,7 @@ function _init()
 	chunk_height = 30     
 	trigger_buffer = 20    
 
-	generate_chunk(64, 0, map_start, map_end, 65, 18, 24, 3, 6, 0.4, true)
+	generate_chunk(64, 0, map_start, map_end, wall_sprites[player.spr_set], 18, 24, 3, 6, 0.4, true)
 	world_generated_up_to = 0
 end
 
@@ -155,8 +181,9 @@ end
 
 function _draw() 
   cls()
-  draw_world_wrapped(cam_x, cam_y) 
 	change_palette(current_palette)
+	draw_background()
+  draw_world_wrapped(cam_x, cam_y) 
 
 	--shakes player when struggling
 	local shake_x = 0
@@ -181,4 +208,30 @@ function _draw()
 	print("score: " .. score, cam_x+1, cam_y+9)
 end
 
+function draw_background()
 
+	local tile_size = 16
+	local parallax_factor = 0.2
+
+	local scroll_x = (cam_x * parallax_factor) % tile_size
+	local scroll_y = (cam_y * parallax_factor) % tile_size
+
+	local b = bg_sprites[player.spr_set]
+
+	camera(0,0)
+
+	for y = -tile_size, 128+tile_size, tile_size do
+		for x = -tile_size, 128+tile_size, tile_size do
+			local screen_x = x - scroll_x
+			local screen_y = y - scroll_y
+
+			spr(b[1], screen_x,   screen_y,   1, 1)
+			spr(b[2], screen_x+8, screen_y,   1, 1)
+			spr(b[3], screen_x,   screen_y+8, 1, 1)
+			spr(b[4], screen_x+8, screen_y+8, 1, 1)
+		end
+	end
+
+	camera(cam_x, cam_y)
+
+end

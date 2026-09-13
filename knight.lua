@@ -29,7 +29,7 @@ function update_knight(e)
         if can_knight_jump(e) then
             e.state = "jump"
             e.dy = -2
-            e.dx = e.dir * e.speed * 1,25
+            e.dx = e.dir * e.speed * 1.25
         else
             e.state = "cooldown"
             e.timer = 20
@@ -39,6 +39,16 @@ function update_knight(e)
 	elseif e.state == "jump" then
 
 		move_knight(e)
+
+	elseif e.state == "land" then
+
+    e.dx = 0
+    e.land_timer -= 1
+
+    if e.land_timer <= 0 then
+        e.state = "cooldown"
+        e.timer = 20
+    end
 
 	elseif e.state == "cooldown" then
 
@@ -50,6 +60,8 @@ function update_knight(e)
 			e.state = "idle"
 		end
 	end
+
+	animate_knight(e)
 
 end
 
@@ -127,17 +139,43 @@ function move_knight(e)
 
 	elseif e.dy > 0 then
 		local hit, tx, ty = collide(e,"down",0)
-		if hit then
-			e.y = ty*8 - e.h
-			e.dy = 0
 
-			if e.state == "jump" then
-				e.state = "cooldown"
-				e.timer = 20
-			end
-		else
-			e.y += e.dy
+    if hit then
+        e.y = ty*8 - e.h
+        e.dy = 0
+
+        if e.state == "jump" then
+            e.state = "land"
+            e.land_timer = 6 
+        end
+    else
+        e.y += e.dy
+    end
+	end
+
+end
+
+function animate_knight(e)
+
+	local knight_spr_base=128
+
+	if e.state == "idle" then
+
+		if time()-e.anim > 0.3 then
+			e.anim = time()
+			e.spr = (e.spr == knight_spr_base) and knight_spr_base+1 or knight_spr_base
 		end
+
+	elseif e.state == "land" then
+		e.spr = knight_spr_base+4
+
+	elseif e.state == "prepare" then
+		e.spr = knight_spr_base+2
+
+	elseif e.state == "jump"
+	or e.state == "cooldown" then
+		e.spr = knight_spr_base+3
+
 	end
 
 end

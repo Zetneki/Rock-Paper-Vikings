@@ -57,4 +57,17 @@ function update_wizard(e)
 
 	e.flp = player.x < e.x
 
+	animate_wizard(e)
+
+end
+
+function animate_wizard(e)
+
+	local wizard_spr_base=144
+
+	if time()-e.anim > 0.3 then
+		e.anim = time()
+		e.spr = (e.spr == wizard_spr_base) and wizard_spr_base+1 or wizard_spr_base
+	end
+
 end
