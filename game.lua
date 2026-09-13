@@ -1,21 +1,8 @@
-function _init()
-	cartdata("rock_paper_wizards_v1")
-
-	game_state = "menu"
-	load_scoreboard()
-
-	if high_score_name == "---" then
-		init_name_entry()
-		game_state = "enter_name"
-	else
-		player_name = high_score_name
-		init_menu()
-		game_state = "menu"
-	end
-	poke(0x5f2e, 1) -- allows hidden colors
+function init_game()
+  poke(0x5f2e, 1) -- allows hidden colors
 	poke(0x5f5c, 255) -- button press only activates once
 
-	test = false
+  test = false
 
 	gravity = 0.3
 	friction = 0.85
@@ -40,6 +27,7 @@ function _init()
 		falling=false,
 		sliding=false,
 		landed=false,
+    dash_used_on_platform=false,
 		dash_act_time=0,
 		dash_ready_l=false,
 		dash_ready_r=false,
@@ -67,35 +55,8 @@ function _init()
 		release_duration=10,
 		release_start_x=0,
 		release_start_y=0,
-		shake_timer=0,
-
+		shake_timer=0
   }
-
-	music_patterns = {
-		viking=0,
-		cowboy=4,
-		knight=8,
-		wizard=12
-	}
-
-	wall_sprites = {
-		viking=66,
-		cowboy=68,
-		knight=66,
-		wizard=70
-	}
-
-	bg_sprites = {
-		viking = {71, 72, 87, 88},
-		wizard = {75, 76, 91, 92},
-		knight = {73, 74, 89, 90},
-		cowboy = {73, 74, 89, 90}
-	}
-
-	decoration_sprites = {114, 116, 118}
-
-	music(music_patterns[player.spr_set])
-
 
 	enemies = {}
 
@@ -106,8 +67,8 @@ function _init()
 
 	-- charater type timer
 	phase = {
-		duration=450,     -- 600 frame = 20mp at 30fps
-		current=450,
+		duration=400,     -- 600 frame = 20mp at 30fps
+		current=400,
 		char_index=1,    
 		dot_count=8, 
 	
@@ -137,10 +98,14 @@ function _init()
 
 	palettes={
 		base = {
-		[0]=0,8,3,-7,4,9,-1,15,-15,1,-5,-13,13,-10,5,-11
+			[0]=-14,2,3,-7,4,-2,-1,15,-15,
+			1,-3,-13,13,-10,5,-11
+		},
+		new = {[0]=0,8,3,-7,4,9,-1,15,-15,
+		1,-5,-13,13,-10,5,-11
 	}}
 
-	current_palette = palettes.base
+	current_palette = palettes.new
 
 	-- cam_x=0
 	cam_x, cam_y = 0, 0
@@ -161,45 +126,60 @@ function _init()
 	chunk_height = 30     
 	trigger_buffer = 20    
 
-	generate_chunk(64, 0, map_start, map_end, wall_sprites[player.spr_set], 18, 24, 3, 6, 0.4, true)
+	generate_chunk(64, 0, map_start, map_end, 65, 18, 24, 3, 6, 0.4, true)
 	world_generated_up_to = 0
+
+  death_timer = nil
 end
 
-function _update()
-	if game_state == "menu" then
-		update_menu()
-	elseif game_state == "playing" then
-		update_game()
-	elseif game_state == "howto" then
-		update_howto()
-	elseif game_state == "gameover" then
-		update_gameover()
-	elseif game_state == "enter_name" then
-		update_name_entry()
-	elseif game_state == "scoreboard" then
-		update_scoreboard()
+function update_game()
+	if not player.dead then
+		update_phase()
+		move()
+		update_camera()
+		player_animate(player.spr_set)
+		update_enemies()
+
+		cleanup_distant_enemies()
+
+		if last_height-player.y > 50 then
+			last_height = player.y
+			score+=10
+		end
+
+		local player_ty = flr(player.y/8)
+
+		if player_ty < world_generated_up_to + trigger_buffer then
+			local new_top = world_generated_up_to - chunk_height
+			generate_chunk(world_generated_up_to, new_top, map_start, map_end, 65, 18, 24, 3, 6, 0.4)
+			world_generated_up_to = new_top
+		end
+
+		check_offscreen_death()
+	else
+		if death_timer == nil then
+			death_timer = 30
+		end
+
+		death_timer -= 1
+
+		if death_timer <= 0 then
+			if score > high_score then
+				high_score = score
+				high_score_name = player_name
+				save_scoreboard(player_name, score)
+			end
+
+			game_state = "gameover"
+			death_timer = nil
+		end
 	end
 end
 
-function _draw()
-	if game_state == "menu" then
-		draw_menu()
-	elseif game_state == "playing" then
-		draw_game()
-	elseif game_state == "howto" then
-		draw_howto()
-	elseif game_state == "gameover" then
-		draw_gameover()
-	elseif game_state == "enter_name" then
-		draw_name_entry()
-	elseif game_state == "scoreboard" then
-		draw_scoreboard()
-	end
-function _draw() 
+function draw_game()
   cls()
-	change_palette(current_palette)
-	draw_background()
   draw_world_wrapped(cam_x, cam_y) 
+	change_palette(current_palette)
 
 	--shakes player when struggling
 	local shake_x = 0
@@ -224,30 +204,14 @@ function _draw()
 	print("score: " .. score, cam_x+1, cam_y+9)
 end
 
-function draw_background()
+function check_offscreen_death()
+	local completely_offscreen =
+		player.x + player.w < cam_x or
+		player.x > cam_x + 128 or
+		player.y + player.h < cam_y or
+		player.y > cam_y + 128
 
-	local tile_size = 16
-	local parallax_factor = 0.2
-
-	local scroll_x = (cam_x * parallax_factor) % tile_size
-	local scroll_y = (cam_y * parallax_factor) % tile_size
-
-	local b = bg_sprites[player.spr_set]
-
-	camera(0,0)
-
-	for y = -tile_size, 128+tile_size, tile_size do
-		for x = -tile_size, 128+tile_size, tile_size do
-			local screen_x = x - scroll_x
-			local screen_y = y - scroll_y
-
-			spr(b[1], screen_x,   screen_y,   1, 1)
-			spr(b[2], screen_x+8, screen_y,   1, 1)
-			spr(b[3], screen_x,   screen_y+8, 1, 1)
-			spr(b[4], screen_x+8, screen_y+8, 1, 1)
-		end
+	if completely_offscreen then
+		player.dead = true
 	end
-
-	camera(cam_x, cam_y)
-
 end

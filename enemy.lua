@@ -139,6 +139,8 @@ end
 
 
 function check_enemy_collision()
+  if player.dashing then return end
+
 	for e in all(enemies) do
 		if not e.dead then
 			if player_enemy_overlap(e) then
@@ -193,6 +195,9 @@ end
 
 function player_dead()
   player.dead = true
+  player.dy += gravity
+	player.y += player.dy
+
 end
 
 function cleanup_distant_enemies()

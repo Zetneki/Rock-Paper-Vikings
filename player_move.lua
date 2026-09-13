@@ -61,7 +61,7 @@ function move()
 	-- gravity (falling)
 	if player.dy > 0 then
 		player.falling = true
-		player.landed = false
+		--player.landed = false
 		player.jumping = false
 
 		if not player.slamming then
@@ -74,12 +74,19 @@ function move()
 
 		if hit then
 			player.dy = 0
+
+			if not player.landed then  
+        player.dash_used_on_platform = false
+			end
+
 			player.landed = true
-			player.double_jump = true  -- mikor coin-hoz kotjuk, akkor tesszuk majd igazza ha van
+			player.double_jump = true 
 			player.falling = false
 			player.slamming=false
 			player.y = (tile_y)*8 - player.h
-		end
+		else
+        player.landed = false   -- <<< IDE KERÜL, csak akkor, ha TÉNYLEG nincs találat (levegőben vagy)
+    end
 
 	--gravity (jumping)
 	elseif player.dy < 0 then
@@ -200,15 +207,19 @@ function dash()
 	if btnp(➡️)
 	and player.dash_ready_r
 	and not player.dash_ready_l
-	and time()-player.dash_act_time<0.25 then
+	and time()-player.dash_act_time<0.25
+	and not player.dash_used_on_platform then
 		player.dx += player.dash_speed
 		player.dash_timer = 6
+		player.dash_used_on_platform = true
 	elseif btnp(⬅️)
 	and player.dash_ready_l
 	and not player.dash_ready_r
-	and time()-player.dash_act_time<0.25 then
+	and time()-player.dash_act_time<0.25 
+	and not player.dash_used_on_platform then
 		player.dx -= player.dash_speed
 		player.dash_timer = 6
+		player.dash_used_on_platform = true
 
 	-- if right or left button is pressed, sets dash_ready to true
 	elseif btnp(➡️) then
