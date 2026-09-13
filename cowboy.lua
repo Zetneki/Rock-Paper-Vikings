@@ -7,9 +7,12 @@ function update_cowboy(e)
 	local dy = player.y - center_y
 	local dist = sqrt(dx*dx + dy*dy)
 
-	if e.c_state == "idle" then
+	local margin = 16
+	local on_screen = e.y > cam_y - margin and e.y < cam_y + 128 + margin and e.x > cam_x - margin and e.x < cam_x + 128 + margin
 
-		if dist < e.pull_range then
+	if e.c_state == "idle" then
+		if dist < e.pull_range and on_screen then
+			e.c_state = "pulling"
 			e.c_state = "pulling"
 			e.c_timer = e.pull_duration
       e.pulse_frame = 0
@@ -82,7 +85,7 @@ function update_cowboy(e)
 		e.c_timer -= 1
 
 		if e.c_timer <= 0 then
-			if dist < e.pull_range then
+			if dist < e.pull_range and on_screen then
 				e.c_state = "pulling"
 				e.c_timer = e.pull_duration
         e.pulse_frame = 0

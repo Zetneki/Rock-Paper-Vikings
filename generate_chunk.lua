@@ -1,4 +1,4 @@
-function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, min_gap, max_gap, min_len, max_len, split_chance)
+function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, min_gap, max_gap, min_len, max_len, split_chance, is_initial_spawn)
 
 	local tx_min_clear = flr(x_min/8)
 	local tx_max_clear = flr(x_max/8)
@@ -17,6 +17,11 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 	local air_time_frames = (2*player.boost) / gravity
 	local max_jump_dist_tiles = (air_time_frames * player.max_dx) / 8
 
+	local ty = world_ty_top
+	local prev_bottom_y = nil
+	local prev_tx_center = nil
+	local forced_direction = nil
+
 	local shapes = {
 		function(tx, ty, len, h)
 			local cx, cy = len/2, h/2
@@ -33,10 +38,7 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 		end,
 	}
 
-	local ty = world_ty_top
-	local prev_bottom_y = nil
-	local prev_tx_center = nil
-	local forced_direction = nil
+	local generated_platforms = {}
 
 	while ty > world_ty_bottom do
 
@@ -94,6 +96,9 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 			draw_shape_wrapped(tx, ty, len1, h1, wall_spr, wall_spr+1)
 			draw_shape_wrapped(tx+len1+gap_between, ty, len2, h2, wall_spr, wall_spr+1)
 
+			add(generated_platforms, {tx=tx, ty=ty-h1+1, len=len1})
+			add(generated_platforms, {tx=tx+len1+gap_between, ty=ty-h2+1, len=len2})
+
 			actual_top_y = ty - max(h1, h2) + 1
 			actual_center = tx + flr(effective_width/2)
 		else
@@ -104,7 +109,13 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 
 		prev_bottom_y = actual_top_y 
 		prev_tx_center = actual_center
-		
+	end
+
+	if is_initial_spawn then
+		spawn_player(generated_platforms)
+		spawn_enemies_on_platforms(generated_platforms, 3)   
+	else
+		spawn_enemies_on_platforms(generated_platforms, 0)   
 	end
 end
 
@@ -144,4 +155,37 @@ function min_h_shift_val(max_h_shift, forced_direction)
 		shift = -shift
 	end
 	return shift
+end
+
+enemy_types = {"knight", "wizard", "cowboy"}
+
+function spawn_enemies_on_platforms(platforms, skip_first_n)
+	skip_first_n = skip_first_n or 0
+
+	for i, p in ipairs(platforms) do
+		if i > skip_first_n then   
+
+			local spawn_chance = 0.65
+			if p.len >= 3 and rnd(1) < spawn_chance then
+				local margin = 1
+				local safe_len = max(1, p.len - margin*2)
+				local offset = margin + flr(rnd(safe_len))
+
+				local enemy_tx = p.tx + offset
+				local enemy_x = enemy_tx * 8
+				local enemy_y = p.ty * 8 - 8
+
+				spawn_enemy(enemy_x, enemy_y, enemy_types[1 + flr(rnd(#enemy_types))])
+			end
+		end
+	end
+end
+
+function spawn_player(platforms)
+	if #platforms > 0 then
+		local spawn_platform = platforms[1]
+		local spawn_tx = spawn_platform.tx + flr(spawn_platform.len/2)  
+		player.x = spawn_tx * 8
+		player.y = spawn_platform.ty * 8 - player.h   
+	end
 end

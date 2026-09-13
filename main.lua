@@ -11,8 +11,8 @@ function _init()
 		spr_set='viking',
 		spr=p_spr_sets['viking'],
 		flp=false,
-    x=10*8,
-    y=1,
+    x = 140,
+    y = 490,
 		w=8,
 		h=8,
     dy=0,
@@ -62,12 +62,12 @@ function _init()
 	--- TEST -----
 	--spawn_enemy(24,32,"knight")
 	--spawn_enemy(88, 24, "wizard")
-	spawn_enemy(24,64,"cowboy")
+	--spawn_enemy(24,64,"cowboy")
 
 	-- charater type timer
 	phase = {
-		duration=100,     -- 600 frame = 20mp at 30fps
-		current=100,
+		duration=400,     -- 600 frame = 20mp at 30fps
+		current=400,
 		char_index=1,    
 		dot_count=8, 
 	
@@ -122,37 +122,35 @@ function _init()
 	chunk_height = 30     
 	trigger_buffer = 20    
 
-	generate_chunk(64, 0, map_start, map_end, 65, 18, 24, 3, 6, 0.4)
+	generate_chunk(64, 0, map_start, map_end, 65, 18, 24, 3, 6, 0.4, true)
 	world_generated_up_to = 0
-
-	ensure_spawn_platform(player.x, player.y, 65, 66)
 end
 
 function _update()
-	move()
-	player_animate(player.spr_set)
-
-	if last_height-player.y > 50 then
-		last_height = player.y
-		score+=10
-	end
-
-  update_camera()
-
-	local player_ty = flr(player.y/8)
-
-	if player_ty < world_generated_up_to + trigger_buffer then
-		local new_top = world_generated_up_to - chunk_height
-		generate_chunk(world_generated_up_to, new_top, map_start, map_end, 65, 18, 24, 3, 6, 0.4)
-		world_generated_up_to = new_top
-	end
 	if not player.dead then
 		update_phase()
 		move()
+		update_camera()
 		player_animate(player.spr_set)
 		update_enemies()
-	end
+	
 
+		cleanup_distant_enemies()
+
+		if last_height-player.y > 50 then
+			last_height = player.y
+			score+=10
+		end
+
+
+		local player_ty = flr(player.y/8)
+
+		if player_ty < world_generated_up_to + trigger_buffer then
+			local new_top = world_generated_up_to - chunk_height
+			generate_chunk(world_generated_up_to, new_top, map_start, map_end, 65, 18, 24, 3, 6, 0.4)
+			world_generated_up_to = new_top
+		end
+	end
 end
 
 function _draw() 
@@ -180,7 +178,7 @@ function _draw()
 		print("on wall right:" .. tostring(player.on_wall_right))
 	end
 
-	print("score: " .. score, cam_x, cam_y)
+	print("score: " .. score, cam_x+1, cam_y+9)
 end
 
 

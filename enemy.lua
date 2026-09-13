@@ -127,9 +127,8 @@ function draw_enemies()
             print("⬅️", player.x-6, player.y-16, dim_col)
             print("➡️", player.x+4, player.y-16+bounce, hl_col)
         end
-    
+      end
     end
-  end
   end
 end
 
@@ -189,4 +188,14 @@ end
 
 function player_dead()
   player.dead = true
+end
+
+function cleanup_distant_enemies()
+	local despawn_distance = 300 
+
+	for e in all(enemies) do
+		if not e.dead and abs(e.y - player.y) > despawn_distance then
+			del(enemies, e)
+		end
+	end
 end

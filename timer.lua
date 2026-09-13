@@ -20,8 +20,8 @@ function draw_phase_bar()
 
 	local dot_size=5
 	local gap=3
-	local origin_x=64 - flr(phase.dot_count*(dot_size+gap)/2)
-	local origin_y=2
+	local origin_x=cam_x + (phase.dot_count*8/2)
+	local origin_y=cam_y + 2
 
 	local col
 	if phase.char_index==1 then col=8
