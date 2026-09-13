@@ -188,6 +188,9 @@ end
 
 function player_dead()
   player.dead = true
+  player.dy += gravity
+	player.y += player.dy
+
 end
 
 function cleanup_distant_enemies()
