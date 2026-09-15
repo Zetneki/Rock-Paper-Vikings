@@ -66,10 +66,10 @@ function init_game()
 	}
 
 	wall_sprites = {
-		viking=66,
-		cowboy=68,
-		knight=66,
-		wizard=70
+		viking=65,
+		cowboy=67,
+		knight=65,
+		wizard=69
 	}
 
 	bg_sprites = {
@@ -92,8 +92,8 @@ function init_game()
 
 	-- charater type timer
 	phase = {
-		duration=400,     -- 600 frame = 20mp at 30fps
-		current=400,
+		duration=445,     -- 600 frame = 20mp at 30fps
+		current=445,
 		char_index=1,    
 		dot_count=8, 
 	
@@ -176,7 +176,7 @@ function update_game()
 
 		if player_ty < world_generated_up_to + trigger_buffer then
 			local new_top = world_generated_up_to - chunk_height
-			generate_chunk(world_generated_up_to, new_top, map_start, map_end, 65, 18, 24, 3, 6, 0.4)
+			generate_chunk(world_generated_up_to, new_top, map_start, map_end, wall_sprites[player.spr_set], 18, 24, 3, 6, 0.4)
 			world_generated_up_to = new_top
 		end
 
@@ -232,33 +232,6 @@ function draw_game()
 	end
 
 	print("score: " .. score, cam_x+1, cam_y+9)
-end
-
-function draw_background()
-
-	local tile_size = 16
-	local parallax_factor = 0.2
-
-	local scroll_x = (cam_x * parallax_factor) % tile_size
-	local scroll_y = (cam_y * parallax_factor) % tile_size
-
-	local b = bg_sprites[player.spr_set]
-
-	camera(0,0)
-
-	for y = -tile_size, 128+tile_size, tile_size do
-		for x = -tile_size, 128+tile_size, tile_size do
-			local screen_x = x - scroll_x
-			local screen_y = y - scroll_y
-
-			spr(b[1], screen_x,   screen_y,   1, 1)
-			spr(b[2], screen_x+8, screen_y,   1, 1)
-			spr(b[3], screen_x,   screen_y+8, 1, 1)
-			spr(b[4], screen_x+8, screen_y+8, 1, 1)
-		end
-	end
-
-	camera(cam_x, cam_y)
 end
 
 function check_offscreen_death()

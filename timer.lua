@@ -33,12 +33,39 @@ function retile_floor(old_spr, new_spr)
 			local s = mget(tx, map_row)
 			if s == old_spr then
 				mset(tx, map_row, new_spr)
-			elseif s == old_spr-1 then
-				mset(tx, map_row, new_spr-1)
+			elseif s == old_spr+1 then
+				mset(tx, map_row, new_spr+1)
 			end
 		end
 	end
 
+end
+
+function draw_background()
+
+	local tile_size = 16
+	local parallax_factor = 0.2
+
+	local scroll_x = (cam_x * parallax_factor) % tile_size
+	local scroll_y = (cam_y * parallax_factor) % tile_size
+
+	local b = bg_sprites[player.spr_set]
+
+	camera(0,0)
+
+	for y = -tile_size, 128+tile_size, tile_size do
+		for x = -tile_size, 128+tile_size, tile_size do
+			local screen_x = x - scroll_x
+			local screen_y = y - scroll_y
+
+			spr(b[1], screen_x,   screen_y,   1, 1)
+			spr(b[2], screen_x+8, screen_y,   1, 1)
+			spr(b[3], screen_x,   screen_y+8, 1, 1)
+			spr(b[4], screen_x+8, screen_y+8, 1, 1)
+		end
+	end
+
+	camera(cam_x, cam_y)
 end
 
 function draw_phase_bar()

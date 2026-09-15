@@ -167,7 +167,7 @@ function spawn_enemies_on_platforms(platforms, skip_first_n)
 	for i, p in ipairs(platforms) do
 		if i > skip_first_n then   
 
-			local spawn_chance = 0.65
+			local spawn_chance = 0.5 -- change based on score
 			if p.len >= 3 and rnd(1) < spawn_chance then
 				local margin = 1
 				local safe_len = max(1, p.len - margin*2)

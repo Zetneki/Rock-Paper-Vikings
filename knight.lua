@@ -80,9 +80,9 @@ function can_knight_jump(e)
 
 	local tx = flr(check_x / 8)
 	local ty = flr(check_y / 8)
+	local map_row = world_to_map_row(ty)
 
-	return fget(mget(tx,ty),0)
-
+	return fget(mget(tx, map_row), 0)
 end
 
 function player_in_knight_range(e)
@@ -157,7 +157,7 @@ end
 
 function animate_knight(e)
 
-	local knight_spr_base=128
+	local knight_spr_base=187
 
 	if e.state == "idle" then
 
