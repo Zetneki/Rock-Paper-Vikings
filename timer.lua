@@ -19,6 +19,7 @@ function update_phase()
 		music(music_patterns[player.spr_set])
 
 		retile_floor(wall_sprites[old_char], wall_sprites[player.spr_set])
+		retile_decoration(decoration_sprites[old_char], decoration_sprites[player.spr_set])
 	end
 end
 
@@ -38,7 +39,21 @@ function retile_floor(old_spr, new_spr)
 			end
 		end
 	end
+end
 
+function retile_decoration(old_spr, new_spr)
+	local tx_min_clear = flr(map_start/8)
+	local tx_max_clear = flr(map_end/8)
+
+	for ty = world_generated_up_to, 64 do
+		local map_row = world_to_map_row(ty)
+		for tx = tx_min_clear, tx_max_clear do
+			local s = mget(tx, map_row)
+			if s == old_spr then
+				mset(tx, map_row, new_spr)
+			end
+		end
+	end
 end
 
 function draw_background()

@@ -63,7 +63,9 @@ function draw_howto()
 
   print("controls:", 4, y, 9) y+=lh
   print("arrows: move", 4, y, 7) y+=lh
+  print("2x tap up: jump", 4, y, 7) y+=lh
   print("2x tap l/r: dash", 4, y, 7) y+=lh
+  print("dash gives invulnerability", 4, y, 2) y+=lh
   print("2x tap down: slam", 4, y, 7) y+=lh
   print("wall-jump near walls", 4, y, 7) y+=lh+3
 

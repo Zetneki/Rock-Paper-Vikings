@@ -79,7 +79,12 @@ function init_game()
 		cowboy = {73, 74, 89, 90}
 	}
 
-	decoration_sprites = {114, 116, 118}
+	decoration_sprites = {
+		viking = 114,
+		cowboy = 116,
+		knight = 114,
+		wizard = 118,
+	}
 
 	music(music_patterns[player.spr_set])
 

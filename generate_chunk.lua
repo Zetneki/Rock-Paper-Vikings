@@ -114,11 +114,11 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 	if is_initial_spawn then
 		spawn_player(generated_platforms)
 		spawn_enemies_on_platforms(generated_platforms, 3)   
-		spawn_decorations_on_platforms(generated_platforms, 3)
 	else
 		spawn_enemies_on_platforms(generated_platforms, 0)   
-		spawn_decorations_on_platforms(generated_platforms, 0)
 	end
+
+	spawn_decorations_on_platforms(generated_platforms)
 end
 
 function draw_shape_wrapped(tx, world_ty, len, h, top_spr, fill_spr)
@@ -192,21 +192,23 @@ function spawn_player(platforms)
 	end
 end
 
-function spawn_decorations_on_platforms(platforms, skip_first_n)
-	skip_first_n = skip_first_n or 0
-
+function spawn_decorations_on_platforms(platforms)
 	for i, p in ipairs(platforms) do
-		if i > skip_first_n then
 
-			local deco_chance = 0.5
-			if p.len >= 2 and rnd(1) < deco_chance then
+		local deco_chance = 0.5
+		if p.len >= 2 and rnd(1) < deco_chance then
 
-				local deco_tx = p.tx + flr(rnd(p.len))
-				local deco_ty = p.ty - 1
+			local deco_tx = p.tx + flr(rnd(p.len))
+			local map_row = world_to_map_row(p.ty)
 
-				local spr_id = decoration_sprites[1 + flr(rnd(#decoration_sprites))]
+			local found = false
 
-				mset(deco_tx, world_to_map_row(deco_ty), spr_id)
+			for check_row = map_row, map_row + 3 do
+				if fget(mget(deco_tx, check_row), 0) then
+					mset(deco_tx, check_row - 1, decoration_sprites[player.spr_set])
+					found = true
+					break
+				end
 			end
 		end
 	end
