@@ -48,6 +48,6 @@ function draw_name_entry()
 		print(ch, 55 + (i-1)*10, 60, col)
 	end
 
-	print("arrows: select/change", 8, 90, 6)
+	print("⬅️➡️⬆️⬇️: select/change", 8, 90, 6)
 	print("❎: confirm   🅾️: cancel", 8, 100, 6)
 end

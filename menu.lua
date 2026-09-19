@@ -34,7 +34,7 @@ function draw_menu()
 	pal()     
   cls(1)
 
-  print("rock paper wizards", 40, 30, 7)
+  print("rock paper vikings", 40, 30, 7)
 
   for i, opt in ipairs(menu_options) do
     local y = 60 + (i-1)*10
@@ -58,9 +58,9 @@ function draw_howto()
   local y = 4
   local lh = 6  
 
-  print("rock-paper-wizards", 4, y, 10) y+=lh+2
+  print("rock-paper-vikings", 4, y, 10) y+=lh+2
   print("the ultimate climbing game", 4, y, 6) y+=lh+2
-
+  
   print("controls:", 4, y, 9) y+=lh
   print("arrows: move", 4, y, 7) y+=lh
   print("2x tap up: jump", 4, y, 7) y+=lh
@@ -69,14 +69,14 @@ function draw_howto()
   print("2x tap down: slam", 4, y, 7) y+=lh
   print("wall-jump near walls", 4, y, 7) y+=lh+3
 
-  print("type cycle:", 4, y, 9) y+=lh
+  print("who beats who:", 4, y, 9) y+=lh
   print("knight beats cowboy", 4, y, 7) y+=lh
   print("cowboy beats wizard", 4, y, 7) y+=lh
   print("wizard beats knight", 4, y, 7) y+=lh+3
 
-  print("your type switches", 4, y, 6) y+=lh
-  print("when the music switches", 4, y, 6) y+=lh
-  print("match it to survive enemies", 4, y, 6) y+=lh+3
+  print("timer runs out - theme changes", 4, y, 6) y+=lh
+  print("jump on the right enemy to kill", 4, y, 6) y+=lh
+  print("killing gives you points", 4, y, 6) y+=lh+3
 
   print("❎: back to menu", 4, y, 5)
 end
