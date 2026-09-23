@@ -6,6 +6,8 @@ function move()
 		return
 	end
 
+	player.prev_y = player.y 
+
 	player.dy += gravity
 	player.dx *= friction
 
@@ -61,7 +63,6 @@ function move()
 	-- gravity (falling)
 	if player.dy > 0 then
 		player.falling = true
-		--player.landed = false
 		player.jumping = false
 
 		if not player.slamming then
@@ -75,9 +76,12 @@ function move()
 		if hit then
 			player.dy = 0
 
-			if not player.landed then  
+			if tile_y ~= player.last_platform_ty then
         player.dash_used_on_platform = false
+        player.last_platform_ty = tile_y
 			end
+
+			if (player.slamming) slam_impact()
 
 			player.landed = true
 			player.double_jump = true 
@@ -85,7 +89,7 @@ function move()
 			player.slamming=false
 			player.y = (tile_y)*8 - player.h
 		else
-        player.landed = false   -- <<< IDE KERÜL, csak akkor, ha TÉNYLEG nincs találat (levegőben vagy)
+        player.landed = false   
     end
 
 	--gravity (jumping)
@@ -237,14 +241,62 @@ end
 function slam()
 
 	if player.slam_ready
-
+	and not player.landed
 	and btnp(⬇️)
 	and time()-player.slam_act_time<0.25 then
 		player.double_jump = false
 		player.dy += 14
 		player.slamming = true
+		player.slam_ready = false
 	elseif btnp(⬇️) then
-		player.slam_ready = true
 		player.slam_act_time = time()
+	end
+end
+
+function slam_impact()
+	player.slam_flash_timer = 5
+	local player_cx = player.x + player.w/2
+	local player_cy = player.y + player.h/2
+	for e in all(enemies) do
+		if not e.dead then
+			local e_cx = e.x + e.w/2
+			local e_cy = e.y + e.h/2
+
+			local dx = e_cx - player_cx
+			local dy = e_cy - player_cy
+			if abs(dx) < 24 and abs(dy) < 12 then
+				if phase.beats[player.spr_set] == e.type then
+					enemy_hit(e)
+				else
+					e.stunned = true
+					e.stun_timer = 30
+				end
+			end
+		end
+	end
+end
+
+function draw_slam()
+	local sprs = {
+		192, 208
+	}
+
+	local px = player.x
+	local py = player.y
+
+	if player.slam_flash_timer and player.slam_flash_timer > 0 then
+		player.slam_flash_timer -= 1
+
+		local stage
+		if player.slam_flash_timer >= 3 then
+			stage = sprs[1]
+		elseif player.slam_flash_timer >= 2 then
+			stage = sprs[2]
+		else 
+			return
+		end
+
+		spr(stage, px + player.w + 0, py, 1, 1, false)
+		spr(stage, px - 8, py, 1, 1, true)
 	end
 end

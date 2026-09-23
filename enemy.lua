@@ -11,6 +11,8 @@ function spawn_enemy(x,y,type)
     max_dy = 6,
 		flp=false,
 		anim=0,
+    stunned = false,
+		stun_timer = 0,
     dead=false,
 
     -- knight
@@ -56,6 +58,9 @@ function update_enemies()
     if e.dead then
       update_dead_enemy(e)
 
+    elseif e.stunned then
+      update_stunned(e)
+
     elseif e.type == "knight" then
 			update_knight(e)
 
@@ -78,23 +83,35 @@ function update_dead_enemy(e)
 	e.y += e.dy
 
 	-- when under screen
-	if e.y > 128 then
+	if e.y > cam_y + 128 then
 		del(enemies,e)
 	end
 
 end
 
+function update_stunned(e)
+  e.stun_timer -= 1
+  if e.stun_timer <= 0 then
+    e.stunned = false
+  end
+
+  e.spr = stun_spr_sets[e.type]
+end
+
 function draw_enemies()
   for e in all(enemies) do
     if e.type == "knight" then
-      local e_spr = e.dead and 133 or e.spr
-      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+      local e_spr = e.dead and 187 or e.spr
+      local flip_y = e.dead
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, flip_y)
     elseif e.type == "wizard" then
       local e_spr = e.dead and 144 or e.spr
-      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+      local flip_y = e.dead
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, flip_y)
     elseif e.type == "cowboy" then
       local e_spr = e.dead and 160 or e.spr
-      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, false)
+      local flip_y = e.dead
+      spr(e_spr,e.x,e.y,e.w / 8,e.h / 8, e.flp, flip_y)
 
       if not e.dead then
         draw_cowboy_range(e)
@@ -139,24 +156,42 @@ end
 
 
 function check_enemy_collision()
-  if player.dashing then return end
+	if (player.dashing or player.slamming) return 
 
 	for e in all(enemies) do
 		if not e.dead then
-			if player_enemy_overlap(e) then
-
-				local current_char = player.spr_set
-				local can_kill = phase.beats[current_char] == e.type
-
-				if player_enemy_collision(e) and can_kill then
+			if enemy_collide(e) then
+				local can_kill = phase.beats[player.spr_set] == e.type
+				if can_kill then
 					enemy_hit(e)
+					player.dy = -3
+					player.slam_ready = true
 				else
 					player_dead()
 				end
-
+			elseif player_enemy_overlap(e) then
+				player_dead()
 			end
 		end
 	end
+end
+
+function enemy_collide(e)
+	local overlap_x =
+		player.x < e.x + e.w
+		and player.x + player.w > e.x
+
+	if not overlap_x or player.dy <= 0 then
+		return false
+	end
+
+	local prev_bottom = player.prev_y + player.h
+	local next_bottom = player.y + player.h
+
+	local crossed_top = prev_bottom <= e.y and next_bottom >= e.y
+	local not_past_bottom = prev_bottom <= e.y + e.h/2
+
+	return crossed_top and not_past_bottom
 end
 
 function player_enemy_overlap(e)
@@ -172,32 +207,12 @@ function player_enemy_overlap(e)
 	return overlap_x and overlap_y
 end
 
-function player_enemy_collision(e)
-
-	local overlap_x =
-		player.x < e.x + e.w
-		and player.x + player.w > e.x
-
-	local hit_top =
-		player.y + player.h >= e.y
-		and player.y + player.h <= e.y + e.h / 2
-
-	local falling = player.dy > 0
-
-	return overlap_x and hit_top and falling
-end
-
 function enemy_hit(e)
-  player.dy = -3
   e.dead = true
-  e.dy = -1
 end
 
 function player_dead()
   player.dead = true
-  player.dy += gravity
-	player.y += player.dy
-
 end
 
 function cleanup_distant_enemies()

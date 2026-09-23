@@ -187,3 +187,12 @@ function anim_disp(spr_val)
 			end
 		end
 end
+
+function draw_skills() 
+	local s_x = map_end-8
+	local d_x = map_end-8*2-1
+	local y = cam_y+9*2+2
+
+	if (not player.dash_used_on_platform) spr(158, d_x, y, 1, 1)
+	if (player.slam_ready) spr(159, s_x, y, 1, 1)
+end

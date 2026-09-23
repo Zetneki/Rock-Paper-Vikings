@@ -22,22 +22,6 @@ function generate_chunk(world_ty_top, world_ty_bottom, x_min, x_max, wall_spr, m
 	local prev_tx_center = nil
 	local forced_direction = nil
 
-	local shapes = {
-		function(tx, ty, len, h)
-			local cx, cy = len/2, h/2
-			for row=0,h-1 do
-				for col=0,len-1 do
-					local dx = (col-cx)/(len/2)
-					local dy = (row-cy)/(h/2)
-					local dist = dx*dx + dy*dy
-					if dist <= 1 or (dist <= 1.4 and rnd(1) < 0.4) then
-						mset(tx+col, ty+row, wall_spr)
-					end
-				end
-			end
-		end,
-	}
-
 	local generated_platforms = {}
 
 	while ty > world_ty_bottom do

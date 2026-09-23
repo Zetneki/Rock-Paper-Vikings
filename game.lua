@@ -2,8 +2,6 @@ function init_game()
   poke(0x5f2e, 1) -- allows hidden colors
 	poke(0x5f5c, 255) -- button press only activates once
 
-  test = false
-
 	gravity = 0.3
 	friction = 0.85
 
@@ -19,6 +17,7 @@ function init_game()
 		dx=0,
 		max_dx=4,
 		max_dy=6,
+		prev_y=490,
 		acc=0.4,
 		boost=4,
 		anim=0,
@@ -28,6 +27,7 @@ function init_game()
 		sliding=false,
 		landed=false,
     dash_used_on_platform=false,
+		last_platform_ty=nil,
 		dash_act_time=0,
 		dash_ready_l=false,
 		dash_ready_r=false,
@@ -35,8 +35,9 @@ function init_game()
 		dash_timer=0,
 		max_dash_dx = 6,
 		dash_speed=6,
+		slam_flash_timer=0,
 		slam_act_time=0,
-		slam_ready=false,
+		slam_ready=true,
 		slamming=false,
 		slam_max_dy=14,
 		jump_held=false,
@@ -84,6 +85,12 @@ function init_game()
 		cowboy = 116,
 		knight = 114,
 		wizard = 118,
+	}
+
+	stun_spr_sets = {
+		knight = 186,   
+		wizard = 146,
+		cowboy = 162
 	}
 
 	display = {
@@ -144,11 +151,6 @@ function init_game()
 	music(music_patterns[player.spr_set])
 
 	enemies = {}
-
-	--- TEST -----
-	--spawn_enemy(24,32,"knight")
-	--spawn_enemy(88, 24, "wizard")
-	--spawn_enemy(24,64,"cowboy")
 
 	-- charater type timer
 	phase = {
@@ -244,11 +246,11 @@ function update_game()
 	else
     if death_timer == nil then
         death_timer = 30
-        player.dy = -3   -- egyszeri felfele lokes (allitsd izles szerint, pl -3 vagy -4)
+        player.dy = -3  
     end
 
-    player.dy += gravity      -- ez MINDEN frame-ben fusson, hogy folyamatosan gyorsuljon
-    player.y += player.dy     -- ez is minden frame-ben
+    player.dy += gravity     
+    player.y += player.dy     
 
     death_timer -= 1
 
@@ -279,22 +281,18 @@ function draw_game()
 			player.shake_timer -= 1
 	end
 	spr(player.spr, player.x+shake_x, player.y, player.w/8, player.h/8, player.flp)
+
+	draw_slam()
+
 	draw_enemies()
 
 	draw_phase_bar()
 
 	print("\^o0ffscore: " .. score, cam_x+2, cam_y+10)
-
+	
 	draw_nemesis()
 
-	----- TEST -----
-	if test then
-		print("⬅️➡️ to move")
-		print("❎ to jump, 🅾️ to dash")
-		print("double jump:" .. tostring(player.double_jump))
-		print("on wall left:" .. tostring(player.on_wall_left))
-		print("on wall right:" .. tostring(player.on_wall_right))
-	end
+	draw_skills()
 end
 
 function check_offscreen_death()
