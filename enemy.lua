@@ -219,7 +219,7 @@ function cleanup_distant_enemies()
 	local despawn_distance = 300 
 
 	for e in all(enemies) do
-		if not e.dead and abs(e.y - player.y) > despawn_distance then
+		if not e.dead and (e.y - player.y) > despawn_distance then
 			del(enemies, e)
 		end
 	end

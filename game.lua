@@ -205,13 +205,15 @@ function init_game()
 	camera_min_y = nil
 
 	score=0
-	last_height=1000
+	last_height=player.y
 
 	auto_scroll_active = false
 	auto_scroll_speed = 0.1 
 
 	chunk_height = 30     
 	trigger_buffer = 20    
+
+	platforms_since_spawn = 0
 
 	generate_chunk(64, 0, map_start, map_end, wall_sprites[player.spr_set], 18, 24, 3, 6, 0.4, true)
 	world_generated_up_to = 0

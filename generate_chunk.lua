@@ -148,11 +148,17 @@ enemy_types = {"knight", "wizard", "cowboy"}
 function spawn_enemies_on_platforms(platforms, skip_first_n)
 	skip_first_n = skip_first_n or 0
 
+	local min_gap = max(1, 3 - flr(score/400))
+	local spawn_chance = min(0.7, 0.45 + score/1500)
+
 	for i, p in ipairs(platforms) do
 		if i > skip_first_n then   
 
-			local spawn_chance = 0.5 -- change based on score
-			if p.len >= 3 and rnd(1) < spawn_chance then
+			platforms_since_spawn += 1
+			
+			if p.len >= 3 
+			and platforms_since_spawn >= min_gap
+			and rnd(1) < spawn_chance then
 				local margin = 1
 				local safe_len = max(1, p.len - margin*2)
 				local offset = margin + flr(rnd(safe_len))
@@ -162,6 +168,7 @@ function spawn_enemies_on_platforms(platforms, skip_first_n)
 				local enemy_y = p.ty * 8 - 8
 
 				spawn_enemy(enemy_x, enemy_y, enemy_types[1 + flr(rnd(#enemy_types))])
+				platforms_since_spawn = 0
 			end
 		end
 	end
