@@ -43,13 +43,13 @@ function move()
 	end
 
 	-- jumping
-	if btnp(⬆️)
+	if (btnp(⬆️) or btnp(❎))
 	and player.landed then
 		player.dy -= player.boost
 		player.landed = false 
 
 	-- double jump
-	elseif btnp(⬆️)
+	elseif (btnp(⬆️) or btnp(❎))
 	and player.double_jump
 	and not (player.on_wall_left or player.on_wall_right) then
 		-- making sure to not take double jump when on wall
@@ -103,7 +103,7 @@ function move()
 			player.y = (tile_y+1)*8
 		end
 		-- jump smaller if not held on full duration
-		if player.jump_held and not btn(⬆️) then
+		if player.jump_held and not (btn(⬆️) or btn(❎)) then
 			player.dy /= 2
 		end
 	end
@@ -160,7 +160,7 @@ function move()
 	if player.on_wall_left then
 		player.dy /= 2
 
-		if btnp(⬆️) then
+		if btnp(⬆️) or btnp(❎) then
 			player.dy = 0
 			player.dy -= player.boost/2
 			player.dx += player.boost/2
@@ -170,7 +170,7 @@ function move()
 	elseif player.on_wall_right then
 		player.dy /= 2
 
-		if btnp(⬆️) then
+		if btnp(⬆️) or btnp(❎) then
 			player.dy = 0
 			player.dy -= player.boost/2
 			player.dx -= player.boost/2
@@ -185,7 +185,7 @@ function move()
 		end
 	end
 
-	player.jump_held = btn(⬆️)
+	player.jump_held = btn(⬆️) or btn(❎)
 
 	player.x += player.dx
 	player.y += player.dy
@@ -207,20 +207,25 @@ end
 
 function dash() 
 
+	local hold_dash_r = btnp(🅾️) and btn(➡️)
+	local hold_dash_l = btnp(🅾️) and btn(⬅️)
+
 	-- if dash is ready and right or left button is pressed then dash
-	if btnp(➡️)
+	if (btnp(➡️)
 	and player.dash_ready_r
 	and not player.dash_ready_l
 	and time()-player.dash_act_time<0.25
-	and not player.dash_used_on_platform then
+	and not player.dash_used_on_platform)
+	or (hold_dash_r and not player.dash_used_on_platform) then
 		player.dx += player.dash_speed
 		player.dash_timer = 6
 		player.dash_used_on_platform = true
-	elseif btnp(⬅️)
+	elseif (btnp(⬅️)
 	and player.dash_ready_l
 	and not player.dash_ready_r
 	and time()-player.dash_act_time<0.25 
-	and not player.dash_used_on_platform then
+	and not player.dash_used_on_platform)
+	or (hold_dash_l and not player.dash_used_on_platform) then
 		player.dx -= player.dash_speed
 		player.dash_timer = 6
 		player.dash_used_on_platform = true
@@ -240,10 +245,11 @@ end
 -- if slam double jump off
 function slam()
 
+	local hold_slam = btnp(🅾️) and btn(⬇️)
+
 	if player.slam_ready
 	and not player.landed
-	and btnp(⬇️)
-	and time()-player.slam_act_time<0.25 then
+	and ((btnp(⬇️) and time()-player.slam_act_time<0.25) or hold_slam) then
 		player.double_jump = false
 		player.dy += 14
 		player.slamming = true

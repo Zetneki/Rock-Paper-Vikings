@@ -34,13 +34,13 @@ function draw_menu()
 	pal()     
   cls(1)
 
-  print("rock paper vikings", 40, 30, 7)
+  print("rock paper vikings", 30, 30, 7)
 
   for i, opt in ipairs(menu_options) do
     local y = 60 + (i-1)*10
     local col = (i == menu_selected) and 10 or 6
-    local prefix = (i == menu_selected) and "> " or "  "
-    print(prefix..opt, 40, y, col)
+    local prefix = (i == menu_selected) and "> " or "   "
+    print(prefix..opt, 30, y, col)
   end
 end
 
@@ -59,24 +59,26 @@ function draw_howto()
   local lh = 6  
 
   print("rock-paper-vikings", 4, y, 10) y+=lh+2
-  print("the ultimate climbing game", 4, y, 6) y+=lh+2
   
   print("controls:", 4, y, 9) y+=lh
-  print("arrows: move", 4, y, 7) y+=lh
-  print("2x tap up: jump", 4, y, 7) y+=lh
-  print("2x tap l/r: dash", 4, y, 7) y+=lh
-  print("dash gives invulnerability", 4, y, 2) y+=lh
-  print("2x tap down: slam", 4, y, 7) y+=lh
-  print("wall-jump near walls", 4, y, 7) y+=lh+3
+  print("movement: ⬆️⬇️⬅️➡️", 4, y, 7) y+=lh
+  print("(double) jump: (2x) ⬆️ // ❎", 4, y, 7) y+=lh
+  print("dash: 2x tap ⬅️/➡️ // 🅾️+⬅️/➡️", 4, y, 7) y+=lh
+  print("gives invulnerability", 4, y, 2) y+=lh
+  print("resets on every new platform", 4, y, 3) y+=lh+1
+  print("slam: 2x tap ⬇️ // 🅾️+⬇️", 4, y, 7) y+=lh
+  print("kills right enemy, stuns others", 4, y, 2) y+=lh
+  print("resets on normal(non-slam) kill", 4, y, 3) y+=lh+1
+  print("wall-jump near walls", 4, y, 7) y+=lh+2
 
   print("who beats who:", 4, y, 9) y+=lh
   print("knight beats cowboy", 4, y, 7) y+=lh
   print("cowboy beats wizard", 4, y, 7) y+=lh
-  print("wizard beats knight", 4, y, 7) y+=lh+3
+  print("wizard beats knight", 4, y, 7) y+=lh+2
 
   print("timer runs out - theme changes", 4, y, 6) y+=lh
   print("jump on the right enemy to kill", 4, y, 6) y+=lh
-  print("killing gives you points", 4, y, 6) y+=lh+3
+  print("killing gives you points", 4, y, 6) y+=lh+2
 
   print("❎: back to menu", 4, y, 5)
 end

@@ -26,6 +26,7 @@ function update_name_entry()
 			final_name = final_name .. sub(name_chars, name_input[i], name_input[i])
 		end
 		player_name = final_name
+		save_last_player_name(final_name)
 		init_menu()
 		game_state = "menu"
 	end

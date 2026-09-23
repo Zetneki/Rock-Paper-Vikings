@@ -4,11 +4,10 @@ function _init()
 	game_state = "menu"
 	load_scoreboard()
 
-	if high_score_name == "---" then
+	if player_name == "---" then
 		init_name_entry()
 		game_state = "enter_name"
 	else
-		player_name = high_score_name
 		init_menu()
 		game_state = "menu"
 	end
