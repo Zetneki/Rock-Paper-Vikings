@@ -219,6 +219,9 @@ function init_game()
 	world_generated_up_to = 0
 
   death_timer = nil
+
+	score_popup = 50
+	score_popup_timer = 0
 end
 
 function update_game()
@@ -290,7 +293,12 @@ function draw_game()
 
 	draw_phase_bar()
 
-	print("\^o0ffscore: " .. score, cam_x+2, cam_y+10)
+	if score_popup_timer > 0 then
+		print("\^o0ffscore: " .. score .. " (+" .. score_popup .. ")", cam_x+2, cam_y+10)
+		score_popup_timer -= 1
+	else
+		print("\^o0ffscore: " .. score, cam_x+2, cam_y+10)
+	end
 	
 	draw_nemesis()
 

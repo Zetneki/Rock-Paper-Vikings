@@ -209,6 +209,8 @@ end
 
 function enemy_hit(e)
   e.dead = true
+  score += score_popup
+  score_popup_timer = 30
 end
 
 function player_dead()
