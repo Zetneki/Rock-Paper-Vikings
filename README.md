@@ -75,7 +75,7 @@ build/   -- the merged, single-file .p8 used for running/exporting and the expor
 
 ## Credits
 
-Built solo in PICO-8 Lua.
+Built with Tóth Bence and Zoltai Csanád in PICO-8 Lua.
 
 ## License
 
