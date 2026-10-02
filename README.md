@@ -1,5 +1,7 @@
 # Rock Paper Vikings
 
+[**Play it in your browser**](https://zetneki.github.io/Rock-Paper-Vikings/)
+
 A vertical platformer for [PICO-8](https://www.lexaloffle.com/pico-8.php). Climb as high as you can, dodge or defeat enemies, and survive as your character class keeps changing on you. The game was created for the [2026 PICO-8 Jam](https://picojam.hu/) and was completed afterwards.
 
 ## Concept
