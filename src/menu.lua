@@ -17,13 +17,13 @@ function update_menu()
 	if btnp(❎) then
 		local choice = menu_options[menu_selected]
 		if choice == "start" then
+      is_enemy = true
 			init_game()
 			game_state = "playing"
-      is_enemy = true
     elseif choice == "no enemy" then
+      is_enemy = false
       init_game()
       game_state = "playing"
-      is_enemy = false
 		elseif choice == "how to play" then
 			game_state = "howto"
 		elseif choice == "high score" then
