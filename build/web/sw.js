@@ -10,7 +10,7 @@ self.addEventListener("install", (event) => {
     addResourcesToCache([
       "./",
       "./favicon.png",
-      "./rock_paper_vikings.html",
+      "./index.html",
       "./rock_paper_vikings.js",
       "./manifest.json",
       "./icon-192.png",
